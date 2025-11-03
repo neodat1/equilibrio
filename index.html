@@ -1,274 +1,305 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Simulador de Punto de Equilibrio</title>
-<style>
-  body {
-    font-family: Arial, sans-serif;
-    background: #f4f4f4;
-    margin: 0;
-    padding: 20px;
-    color: #333;
-  }
-  header {
-    background: #1a1f4f;
-    color: white;
-    padding: 10px;
-    text-align: center;
-    font-size: 1.5em;
-    border-radius: 8px;
-  }
-  .container {
-    max-width: 1000px;
-    margin: 20px auto;
-    background: white;
-    padding: 20px;
-    border-radius: 12px;
-    box-shadow: 0 0 10px rgba(0,0,0,0.1);
-  }
-  label {
-    display: block;
-    margin-top: 10px;
-    font-weight: bold;
-  }
-  input, select {
-    width: 100%;
-    padding: 8px;
-    margin-top: 5px;
-    margin-bottom: 10px;
-    border: 1px solid #ccc;
-    border-radius: 6px;
-  }
-  table {
-    width: 100%;
-    border-collapse: collapse;
-    margin-top: 20px;
-  }
-  th, td {
-    padding: 10px;
-    text-align: center;
-    border-bottom: 1px solid #ddd;
-  }
-  th {
-    background-color: #1a1f4f;
-    color: white;
-  }
-  .success { color: green; }
-  .warning { color: orange; }
-  .danger { color: red; }
-  .chart-container {
-    margin-top: 30px;
-  }
-  .btn {
-    padding: 10px 15px;
-    background: #8c1c13;
-    color: white;
-    border: none;
-    border-radius: 6px;
-    cursor: pointer;
-    margin-top: 10px;
-  }
-  .btn:hover {
-    background: #a42d25;
-  }
-  .lang-switch {
-    float: right;
-    margin-top: -40px;
-    margin-right: 10px;
-  }
-</style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Simulador Punto de Equilibrio</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background-color: #f4f6f9;
+      margin: 0;
+      padding: 0;
+    }
+    header {
+      background-color: #1a1f4f;
+      color: white;
+      padding: 20px;
+      text-align: center;
+      font-size: 24px;
+    }
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 20px;
+    }
+    section {
+      display: none;
+      margin-bottom: 40px;
+    }
+    section.active {
+      display: block;
+    }
+    label {
+      font-weight: bold;
+      display: block;
+      margin-top: 10px;
+    }
+    input, select, button {
+      padding: 10px;
+      font-size: 1rem;
+      margin-top: 5px;
+      margin-bottom: 15px;
+      width: 100%;
+      box-sizing: border-box;
+    }
+    button {
+      background-color: #8c1c13;
+      color: white;
+      border: none;
+      cursor: pointer;
+      border-radius: 4px;
+    }
+    button:hover {
+      background-color: #a42d25;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+    th, td {
+      border: 1px solid #ccc;
+      padding: 10px;
+      text-align: left;
+    }
+    .actions button {
+      width: auto;
+      margin-right: 5px;
+    }
+    .summary {
+      font-weight: bold;
+      padding: 10px;
+      border-radius: 4px;
+    }
+    .summary.green { background-color: #dcedc8; color: #2e7d32; }
+    .summary.yellow { background-color: #fff9c4; color: #f9a825; }
+    .summary.red { background-color: #ffcdd2; color: #c62828; }
+  </style>
 </head>
 <body>
-<header id="title">Simulador de Punto de Equilibrio</header>
-<button class="btn lang-switch" onclick="switchLang()">English</button>
-<div class="container">
-  <label id="productNameLabel">Nombre del producto</label>
-  <input type="text" id="productName">
-  
-  <label id="unitCostLabel">Costo variable unitario</label>
-  <input type="number" id="unitCost" step="0.01">
+  <header>Simulador Punto de Equilibrio</header>
+  <div class="container">
+    <section id="fase1" class="active">
+      <h2>Fase 1: Ingreso de costos fijos</h2>
+      <label>Concepto:</label>
+      <input type="text" id="costoConcepto">
+      <label>Monto:</label>
+      <input type="number" id="costoMonto">
+      <button onclick="agregarCostoFijo()">Agregar</button>
+      <table>
+        <thead><tr><th>Concepto</th><th>Monto</th><th>Acciones</th></tr></thead>
+        <tbody id="tablaCostos"></tbody>
+      </table>
+      <button onclick="goToFase2()">Siguiente</button>
+    </section>
 
-  <label id="priceMethodLabel">Método de precio</label>
-  <select id="priceMethod" onchange="togglePriceMethod()">
-    <option value="manual">Manual</option>
-    <option value="margen">Por margen</option>
-    <option value="mercado">Por mercado</option>
-  </select>
+    <section id="fase2">
+      <h2>Fase 2: Ingreso de productos</h2>
+      <label>Nombre del producto:</label>
+      <input type="text" id="productName">
+      <label>Costo variable unitario:</label>
+      <input type="number" id="unitCost">
+      <button onclick="addProductToList()">Agregar</button>
+      <ul id="productList"></ul>
+      <button onclick="goToFase3()">Siguiente</button>
+    </section>
 
-  <div id="manualPriceGroup">
-    <label id="unitPriceLabel">Precio de venta unitario</label>
-    <input type="number" id="unitPrice" step="0.01">
+    <section id="fase3">
+      <h2>Fase 3: Selección de producto y método de precio</h2>
+      <label for="selectedProduct">Producto</label>
+      <select id="selectedProduct"></select>
+      <label for="priceMethod">Método de precio</label>
+      <select id="priceMethod" onchange="togglePriceMethod()">
+        <option value="manual">Manual</option>
+        <option value="margen">Por margen</option>
+      </select>
+      <div id="manualPriceGroup">
+        <label>Precio de venta unitario:</label>
+        <input type="number" id="unitPrice" step="0.01">
+      </div>
+      <div id="margenGroup" style="display: none;">
+        <label>Margen deseado (%):</label>
+        <input type="number" id="desiredMargin" step="0.01">
+      </div>
+      <button onclick="calcularResultados()">Calcular</button>
+      <div id="resultado"></div>
+    </section>
   </div>
 
-  <div id="margenGroup" style="display: none;">
-    <label id="desiredMarginLabel">Margen de utilidad deseado (%)</label>
-    <input type="number" id="desiredMargin" step="0.1">
-  </div>
+  <script>
+    let fixedCosts = 0;
+    let listaCostos = [];
+    const products = [];
+    let chart;
 
-  <label id="fixedCostsLabel">Costos fijos (separados por coma)</label>
-  <input type="text" id="fixedCosts">
-
-  <label id="estimatedSalesLabel">Ventas estimadas (unidades)</label>
-  <input type="number" id="estimatedSales">
-
-  <button class="btn" onclick="addProduct()">Agregar producto</button>
-
-  <table id="resultsTable">
-    <thead>
-      <tr>
-        <th>Producto</th>
-        <th>Precio Unitario</th>
-        <th>Costo Unitario</th>
-        <th>Margen Contribución</th>
-        <th>PE (unidades)</th>
-        <th>PE ($)</th>
-        <th>Utilidad</th>
-        <th>Estado</th>
-      </tr>
-    </thead>
-    <tbody></tbody>
-  </table>
-
-  <div class="chart-container">
-    <canvas id="breakEvenChart"></canvas>
-  </div>
-</div>
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-<script>
-let lang = 'es';
-const langTexts = {
-  es: {
-    title: "Simulador de Punto de Equilibrio",
-    productNameLabel: "Nombre del producto",
-    unitCostLabel: "Costo variable unitario",
-    priceMethodLabel: "Método de precio",
-    unitPriceLabel: "Precio de venta unitario",
-    desiredMarginLabel: "Margen de utilidad deseado (%)",
-    fixedCostsLabel: "Costos fijos (separados por coma)",
-    estimatedSalesLabel: "Ventas estimadas (unidades)",
-  },
-  en: {
-    title: "Break-even & Profitability Simulator",
-    productNameLabel: "Product name",
-    unitCostLabel: "Unit variable cost",
-    priceMethodLabel: "Pricing method",
-    unitPriceLabel: "Unit sale price",
-    desiredMarginLabel: "Desired margin (%)",
-    fixedCostsLabel: "Fixed costs (comma-separated)",
-    estimatedSalesLabel: "Estimated sales (units)",
-  }
-};
-
-function switchLang() {
-  lang = lang === 'es' ? 'en' : 'es';
-  document.getElementById("title").innerText = langTexts[lang].title;
-  document.getElementById("productNameLabel").innerText = langTexts[lang].productNameLabel;
-  document.getElementById("unitCostLabel").innerText = langTexts[lang].unitCostLabel;
-  document.getElementById("priceMethodLabel").innerText = langTexts[lang].priceMethodLabel;
-  document.getElementById("unitPriceLabel").innerText = langTexts[lang].unitPriceLabel;
-  document.getElementById("desiredMarginLabel").innerText = langTexts[lang].desiredMarginLabel;
-  document.getElementById("fixedCostsLabel").innerText = langTexts[lang].fixedCostsLabel;
-  document.getElementById("estimatedSalesLabel").innerText = langTexts[lang].estimatedSalesLabel;
-  document.querySelector(".lang-switch").innerText = lang === 'es' ? 'English' : 'Español';
-}
-
-function togglePriceMethod() {
-  const method = document.getElementById("priceMethod").value;
-  document.getElementById("manualPriceGroup").style.display = method === 'manual' ? 'block' : 'none';
-  document.getElementById("margenGroup").style.display = method === 'margen' ? 'block' : 'none';
-}
-
-const chartCtx = document.getElementById('breakEvenChart').getContext('2d');
-let breakEvenChart = new Chart(chartCtx, {
-  type: 'line',
-  data: {
-    labels: [],
-    datasets: []
-  },
-  options: {
-    responsive: true,
-    plugins: {
-      legend: { display: true },
-      title: {
-        display: true,
-        text: 'Punto de Equilibrio'
+    function agregarCostoFijo() {
+      const concepto = document.getElementById("costoConcepto").value;
+      const monto = parseFloat(document.getElementById("costoMonto").value);
+      if (concepto && !isNaN(monto)) {
+        listaCostos.push({ concepto, monto });
+        renderTablaCostos();
+        document.getElementById("costoConcepto").value = "";
+        document.getElementById("costoMonto").value = "";
       }
-    },
-    scales: {
-      y: { beginAtZero: true }
     }
-  }
-});
 
-function addProduct() {
-  const name = document.getElementById("productName").value;
-  const unitCost = parseFloat(document.getElementById("unitCost").value);
-  const method = document.getElementById("priceMethod").value;
-  let unitPrice = 0;
-  const fixedCosts = document.getElementById("fixedCosts").value
-    .split(',').map(x => parseFloat(x)).reduce((a, b) => a + b, 0);
-  const estimatedSales = parseFloat(document.getElementById("estimatedSales").value);
-
-  if (method === "manual") {
-    unitPrice = parseFloat(document.getElementById("unitPrice").value);
-  } else if (method === "margen") {
-    const margin = parseFloat(document.getElementById("desiredMargin").value);
-    unitPrice = unitCost / (1 - margin / 100);
-  } else {
-    unitPrice = unitCost * 1.25; // mercado: ejemplo arbitrario
-  }
-
-  const contribution = unitPrice - unitCost;
-  const peUnits = fixedCosts / contribution;
-  const peValue = peUnits * unitPrice;
-  const profit = (estimatedSales * contribution) - fixedCosts;
-  let statusClass = 'success';
-  let statusText = lang === 'es' ? 'Por encima (ganancia)' : 'Above (profit)';
-  if (estimatedSales === peUnits) {
-    statusClass = 'warning';
-    statusText = lang === 'es' ? 'En punto de equilibrio' : 'At break-even';
-  } else if (estimatedSales < peUnits) {
-    statusClass = 'danger';
-    statusText = lang === 'es' ? 'Por debajo (pérdida)' : 'Below (loss)';
-  }
-
-  const tbody = document.querySelector("#resultsTable tbody");
-  const row = document.createElement("tr");
-  row.innerHTML = `
-    <td>${name}</td>
-    <td>$${unitPrice.toFixed(2)}</td>
-    <td>$${unitCost.toFixed(2)}</td>
-    <td>$${contribution.toFixed(2)}</td>
-    <td>${peUnits.toFixed(2)}</td>
-    <td>$${peValue.toFixed(2)}</td>
-    <td>$${profit.toFixed(2)}</td>
-    <td class="${statusClass}">${statusText}</td>
-  `;
-  tbody.appendChild(row);
-
-  const labels = Array.from({length: 21}, (_, i) => i * 5);
-  const revenueData = labels.map(x => x * unitPrice);
-  const costData = labels.map(x => fixedCosts + (x * unitCost));
-
-  breakEvenChart.data.labels = labels;
-  breakEvenChart.data.datasets = [
-    {
-      label: lang === 'es' ? 'Ingreso total' : 'Total Revenue',
-      data: revenueData,
-      borderColor: '#1a1f4f',
-      fill: false
-    },
-    {
-      label: lang === 'es' ? 'Costo total' : 'Total Cost',
-      data: costData,
-      borderColor: '#8c1c13',
-      fill: false
+    function renderTablaCostos() {
+      const tbody = document.getElementById("tablaCostos");
+      tbody.innerHTML = "";
+      listaCostos.forEach((item, i) => {
+        tbody.innerHTML += `<tr><td>${item.concepto}</td><td>$${item.monto.toFixed(2)}</td><td class='actions'><button onclick='editarCosto(${i})'>Editar</button><button onclick='eliminarCosto(${i})'>Eliminar</button></td></tr>`;
+      });
     }
-  ];
-  breakEvenChart.update();
-}
-</script>
+
+    function editarCosto(i) {
+      const item = listaCostos[i];
+      document.getElementById("costoConcepto").value = item.concepto;
+      document.getElementById("costoMonto").value = item.monto;
+      listaCostos.splice(i, 1);
+      renderTablaCostos();
+    }
+
+    function eliminarCosto(i) {
+      listaCostos.splice(i, 1);
+      renderTablaCostos();
+    }
+
+    function goToFase2() {
+      fixedCosts = listaCostos.reduce((acc, item) => acc + item.monto, 0);
+      mostrarFase("fase2");
+    }
+
+    function addProductToList() {
+      const name = document.getElementById("productName").value;
+      const cost = parseFloat(document.getElementById("unitCost").value);
+      if (name && !isNaN(cost)) {
+        products.push({ name, cost });
+        renderTablaProductos();
+        document.getElementById("productName").value = "";
+        document.getElementById("unitCost").value = "";
+      }
+    }
+
+    function renderTablaProductos() {
+      const list = document.getElementById("productList");
+      list.innerHTML = "";
+      products.forEach((p, i) => {
+        list.innerHTML += `<li>${p.name} ($${p.cost.toFixed(2)}) <button onclick='editarProducto(${i})'>Editar</button> <button onclick='eliminarProducto(${i})'>Eliminar</button></li>`;
+      });
+      actualizarSelectProducto();
+    }
+
+    function editarProducto(i) {
+      const p = products[i];
+      document.getElementById("productName").value = p.name;
+      document.getElementById("unitCost").value = p.cost;
+      products.splice(i, 1);
+      renderTablaProductos();
+    }
+
+    function eliminarProducto(i) {
+      products.splice(i, 1);
+      renderTablaProductos();
+    }
+
+    function actualizarSelectProducto() {
+      const select = document.getElementById("selectedProduct");
+      select.innerHTML = "";
+      products.forEach(p => {
+        const option = document.createElement("option");
+        option.value = p.name;
+        option.innerText = p.name;
+        select.appendChild(option);
+      });
+    }
+
+    function goToFase3() {
+      mostrarFase("fase3");
+    }
+
+    function mostrarFase(id) {
+      document.querySelectorAll("section").forEach(sec => sec.classList.remove("active"));
+      document.getElementById(id).classList.add("active");
+    }
+
+    function togglePriceMethod() {
+      const method = document.getElementById("priceMethod").value;
+      document.getElementById("manualPriceGroup").style.display = method === 'manual' ? 'block' : 'none';
+      document.getElementById("margenGroup").style.display = method === 'margen' ? 'block' : 'none';
+    }
+
+    function calcularResultados() {
+      const selectedName = document.getElementById("selectedProduct").value;
+      const product = products.find(p => p.name === selectedName);
+      const method = document.getElementById("priceMethod").value;
+      let unitPrice = 0;
+      if (method === 'manual') {
+        unitPrice = parseFloat(document.getElementById("unitPrice").value);
+      } else {
+        const margin = parseFloat(document.getElementById("desiredMargin").value);
+        unitPrice = product.cost / (1 - margin / 100);
+      }
+      const contribution = unitPrice - product.cost;
+      const peUnits = fixedCosts / contribution;
+      const peValue = peUnits * unitPrice;
+
+      let status, colorClass;
+      if (peUnits === 0) { status = 'Equilibrio'; colorClass = 'yellow'; }
+      else if (peUnits > 0 && contribution > 0) { status = 'Ganancia'; colorClass = 'green'; }
+      else { status = 'Pérdida'; colorClass = 'red'; }
+
+      document.getElementById("resultado").innerHTML = `
+        <div class="summary ${colorClass}">
+          Precio Unitario: $${unitPrice.toFixed(2)}<br>
+          Margen de contribución: $${contribution.toFixed(2)}<br>
+          Punto de equilibrio (unidades): ${peUnits.toFixed(2)}<br>
+          Punto de equilibrio (valor): $${peValue.toFixed(2)}<br>
+          Estado: ${status}
+        </div>
+        <canvas id="chartCanvas"></canvas>
+      `;
+
+      const ctx = document.getElementById("chartCanvas").getContext("2d");
+      const unidades = Array.from({length: 11}, (_, i) => i * Math.ceil(peUnits / 5));
+      const ingresos = unidades.map(u => u * unitPrice);
+      const costosTotales = unidades.map(u => fixedCosts + (product.cost * u));
+
+      if (chart) chart.destroy();
+      chart = new Chart(ctx, {
+        type: 'line',
+        data: {
+          labels: unidades,
+          datasets: [
+            { label: 'Ingresos Totales', data: ingresos, borderColor: '#1a1f4f', fill: false },
+            { label: 'Costos Totales', data: costosTotales, borderColor: '#8c1c13', fill: false }
+          ]
+        },
+        options: {
+          responsive: true,
+          plugins: {
+            title: {
+              display: true,
+              text: 'Ingreso vs. Costo Total'
+            }
+          },
+          scales: {
+            x: {
+              title: {
+                display: true,
+                text: 'Unidades Vendidas'
+              }
+            },
+            y: {
+              title: {
+                display: true,
+                text: 'Valor ($)'
+              }
+            }
+          }
+        }
+      });
+    }
+  </script>
 </body>
 </html>
