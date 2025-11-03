@@ -5,6 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ProfitMaster - Simulador de Punto de Equilibrio</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.25/jspdf.plugin.autotable.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         :root {
@@ -1014,11 +1017,11 @@
                     </div>
                     
                     <div style="margin-top: 30px; display: flex; gap: 10px;">
-                        <button class="btn btn-primary">
+                        <button class="btn btn-primary" id="exportarPdf">
                             <i class="fas fa-download"></i>
                             Exportar PDF
                         </button>
-                        <button class="btn btn-outline">
+                        <button class="btn btn-outline" id="exportarExcel">
                             <i class="fas fa-file-excel"></i>
                             Exportar Excel
                         </button>
@@ -1034,6 +1037,7 @@
         let productos = [];
         let metodoAsignacion = 'proporcional';
         let chart = null;
+        let reportChart = null;
         
         // Inicializar eventos
         document.addEventListener('DOMContentLoaded', function() {
@@ -1046,6 +1050,11 @@
                     this.classList.add('active');
                     const tabId = this.getAttribute('data-tab');
                     document.getElementById(tabId).classList.add('active');
+                    
+                    // Si estamos en la pestaña de reportes, actualizar el gráfico
+                    if (tabId === 'reportes') {
+                        actualizarGraficoReporte();
+                    }
                 });
             });
             
@@ -1071,6 +1080,13 @@
             
             // Calcular equilibrio
             document.getElementById('calcularEquilibrio').addEventListener('click', calcularPuntosEquilibrio);
+            
+            // Generar reporte
+            document.getElementById('generarReporte').addEventListener('click', () => cambiarTab('reportes'));
+            
+            // Exportar
+            document.getElementById('exportarPdf').addEventListener('click', exportarAPdf);
+            document.getElementById('exportarExcel').addEventListener('click', exportarAExcel);
             
             // Cargar datos de ejemplo
             cargarDatosEjemplo();
@@ -1347,6 +1363,50 @@
             });
         }
         
+        function actualizarGraficoReporte() {
+            const ctx = document.getElementById('graficoReporte').getContext('2d');
+            
+            if (reportChart) {
+                reportChart.destroy();
+            }
+            
+            // Preparar datos para el gráfico de reporte
+            const labels = productos.map(p => p.nombre);
+            const ingresos = productos.map(p => p.ingresosEquilibrio || 0);
+            const costos = productos.map(p => p.costosFijosAsignados || 0);
+            const colores = ['#3b82f6', '#6366f1', '#8b5cf6', '#a855f7', '#c084fc'];
+            
+            reportChart = new Chart(ctx, {
+                type: 'pie',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Distribución de Ingresos en Equilibrio',
+                        data: ingresos,
+                        backgroundColor: colores,
+                        borderColor: colores,
+                        borderWidth: 2,
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        title: {
+                            display: true,
+                            text: 'Distribución de Ingresos en el Punto de Equilibrio',
+                            font: {
+                                size: 16,
+                                weight: 'bold'
+                            }
+                        },
+                        legend: {
+                            position: 'right'
+                        }
+                    }
+                }
+            });
+        }
+        
         function actualizarResumen() {
             const costosFijosTotales = costosFijos.reduce((sum, costo) => sum + costo.monto, 0);
             const totalProductos = productos.length;
@@ -1387,6 +1447,24 @@
             
             actualizarTablaCostos();
             actualizarTablaProductos();
+        }
+        
+        function exportarAPdf() {
+            alert('Exportando a PDF...');
+            // En una implementación real, usaríamos jsPDF para generar el PDF
+            // const { jsPDF } = window.jspdf;
+            // const doc = new jsPDF();
+            // doc.text('Reporte de Punto de Equilibrio', 20, 20);
+            // doc.save('reporte-punto-equilibrio.pdf');
+        }
+        
+        function exportarAExcel() {
+            alert('Exportando a Excel...');
+            // En una implementación real, usaríamos SheetJS para generar el Excel
+            // const wb = XLSX.utils.book_new();
+            // const ws = XLSX.utils.table_to_sheet(document.querySelector('table'));
+            // XLSX.utils.book_append_sheet(wb, ws, 'Punto de Equilibrio');
+            // XLSX.writeFile(wb, 'reporte-punto-equilibrio.xlsx');
         }
     </script>
 </body>
