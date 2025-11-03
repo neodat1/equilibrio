@@ -567,6 +567,71 @@
             font-size: 14px;
             color: var(--gray);
         }
+
+        /* Análisis Section */
+        .analysis-section {
+            margin-top: 30px;
+        }
+
+        .analysis-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 25px;
+            margin-top: 20px;
+        }
+
+        .metric-card {
+            background: white;
+            border-radius: var(--radius);
+            padding: 20px;
+            box-shadow: var(--shadow);
+            border-left: 4px solid var(--primary);
+        }
+
+        .metric-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: var(--dark);
+            margin-bottom: 10px;
+        }
+
+        .metric-value {
+            font-size: 24px;
+            font-weight: 700;
+            color: var(--primary);
+        }
+
+        .metric-description {
+            font-size: 14px;
+            color: var(--gray);
+            margin-top: 8px;
+        }
+
+        .sensitivity-analysis {
+            background: white;
+            border-radius: var(--radius);
+            padding: 25px;
+            box-shadow: var(--shadow);
+            margin-top: 25px;
+        }
+
+        .sensitivity-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+        }
+
+        .sensitivity-table th,
+        .sensitivity-table td {
+            padding: 12px;
+            text-align: center;
+            border: 1px solid var(--gray-light);
+        }
+
+        .sensitivity-table th {
+            background: var(--gray-light);
+            font-weight: 600;
+        }
         
         /* Responsive */
         @media (max-width: 1200px) {
@@ -580,6 +645,10 @@
             
             .summary-cards {
                 grid-template-columns: repeat(2, 1fr);
+            }
+
+            .analysis-grid {
+                grid-template-columns: 1fr;
             }
         }
         
@@ -1011,6 +1080,49 @@
                 <div class="chart-container">
                     <canvas id="graficoEquilibrio"></canvas>
                 </div>
+
+                <!-- Sección de Análisis Detallado -->
+                <div class="analysis-section">
+                    <div class="card">
+                        <div class="card-header">
+                            <div class="card-title">
+                                <i class="fas fa-chart-line"></i>
+                                Análisis Financiero Detallado
+                            </div>
+                            <div class="card-icon">
+                                <i class="fas fa-analytics"></i>
+                            </div>
+                        </div>
+
+                        <div class="analysis-grid" id="analisisDetallado">
+                            <!-- Métricas se llenarán dinámicamente -->
+                        </div>
+
+                        <div class="sensitivity-analysis">
+                            <div class="card-title">
+                                <i class="fas fa-chart-bar"></i>
+                                Análisis de Sensibilidad
+                            </div>
+                            <div class="table-container">
+                                <table class="sensitivity-table" id="tablaSensibilidad">
+                                    <thead>
+                                        <tr>
+                                            <th>Escenario</th>
+                                            <th>Variación Precio</th>
+                                            <th>Variación Costo</th>
+                                            <th>Nuevas Unidades</th>
+                                            <th>Nuevos Ingresos</th>
+                                            <th>Impacto</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <!-- Datos de sensibilidad se llenarán aquí -->
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
             
             <!-- Reportes Tab -->
@@ -1281,6 +1393,8 @@
             mostrarResultados(unidadesTotales, ingresosTotales);
             actualizarGrafico();
             actualizarResumen();
+            mostrarAnalisisDetallado();
+            mostrarAnalisisSensibilidad();
         }
         
         function distribuirCostosFijos(costosFijosTotales) {
@@ -1394,6 +1508,83 @@
                         }
                     }
                 }
+            });
+        }
+        
+        function mostrarAnalisisDetallado() {
+            const costosFijosTotales = costosFijos.reduce((sum, costo) => sum + costo.monto, 0);
+            const ingresosTotales = productos.reduce((sum, p) => sum + p.ingresosEquilibrio, 0);
+            const unidadesTotales = productos.reduce((sum, p) => sum + p.unidadesEquilibrio, 0);
+            
+            // Calcular métricas financieras
+            const margenContribucionTotal = productos.reduce((sum, p) => sum + (p.margenUnitario * p.unidadesEquilibrio), 0);
+            const ratioMargenContribucion = (margenContribucionTotal / ingresosTotales) * 100;
+            const puntoEquilibrioPesos = costosFijosTotales / (ratioMargenContribucion / 100);
+            const margenSeguridad = ((ingresosTotales - puntoEquilibrioPesos) / ingresosTotales) * 100;
+            
+            const analisisContainer = document.getElementById('analisisDetallado');
+            analisisContainer.innerHTML = `
+                <div class="metric-card">
+                    <div class="metric-title">Margen de Contribución Total</div>
+                    <div class="metric-value">$${margenContribucionTotal.toLocaleString()}</div>
+                    <div class="metric-description">Contribución total para cubrir costos fijos y generar utilidad</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-title">Ratio de Margen de Contribución</div>
+                    <div class="metric-value">${ratioMargenContribucion.toFixed(1)}%</div>
+                    <div class="metric-description">Porcentaje de cada peso de ventas disponible para cubrir costos fijos</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-title">Punto de Equilibrio en Pesos</div>
+                    <div class="metric-value">$${puntoEquilibrioPesos.toLocaleString()}</div>
+                    <div class="metric-description">Monto de ventas necesario para cubrir todos los costos</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-title">Margen de Seguridad</div>
+                    <div class="metric-value">${margenSeguridad.toFixed(1)}%</div>
+                    <div class="metric-description">Reducción porcentual en ventas antes de incurrir en pérdidas</div>
+                </div>
+            `;
+        }
+        
+        function mostrarAnalisisSensibilidad() {
+            const tbody = document.getElementById('tablaSensibilidad').querySelector('tbody');
+            tbody.innerHTML = '';
+            
+            const escenarios = [
+                { nombre: 'Optimista', precio: 10, costo: -5 },
+                { nombre: 'Base', precio: 0, costo: 0 },
+                { nombre: 'Pesimista', precio: -10, costo: 10 }
+            ];
+            
+            escenarios.forEach(escenario => {
+                let nuevasUnidades = 0;
+                let nuevosIngresos = 0;
+                
+                productos.forEach(producto => {
+                    const nuevoPrecio = producto.precio * (1 + escenario.precio / 100);
+                    const nuevoCosto = producto.costo * (1 + escenario.costo / 100);
+                    const nuevoMargen = nuevoPrecio - nuevoCosto;
+                    const nuevasUnidadesProducto = Math.ceil(producto.costosFijosAsignados / nuevoMargen);
+                    
+                    nuevasUnidades += nuevasUnidadesProducto;
+                    nuevosIngresos += nuevasUnidadesProducto * nuevoPrecio;
+                });
+                
+                const impacto = escenario.precio === 0 && escenario.costo === 0 ? 'Base' : 
+                               (nuevasUnidades < productos.reduce((sum, p) => sum + p.unidadesEquilibrio, 0) ? 'Favorable' : 'Desfavorable');
+                
+                const fila = document.createElement('tr');
+                fila.innerHTML = `
+                    <td><strong>${escenario.nombre}</strong></td>
+                    <td>${escenario.precio > 0 ? '+' : ''}${escenario.precio}%</td>
+                    <td>${escenario.costo > 0 ? '+' : ''}${escenario.costo}%</td>
+                    <td>${nuevasUnidades.toLocaleString()}</td>
+                    <td>$${nuevosIngresos.toLocaleString()}</td>
+                    <td><span class="badge ${impacto === 'Favorable' ? 'badge-success' : impacto === 'Desfavorable' ? 'badge-danger' : 'badge-primary'}">${impacto}</span></td>
+                `;
+                
+                tbody.appendChild(fila);
             });
         }
         
