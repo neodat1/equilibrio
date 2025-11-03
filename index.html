@@ -1,166 +1,323 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <meta name="author" content="Darío Hurtado Cuenca" />
-  <title>Simulador de Punto de Equilibrio - Neodat</title>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet" />
-  <style>
-    body {
-      font-family: 'Inter', sans-serif;
-      margin: 0;
-      background-color: #f4f4f4;
-      color: #333;
-    }
-    header {
-      background-color: #000;
-      color: white;
-      text-align: center;
-      padding: 2rem;
-    }
-    h1 {
-      margin: 0;
-    }
-    main {
-      max-width: 900px;
-      margin: 2rem auto;
-      background-color: white;
-      padding: 2rem;
-      border-radius: 10px;
-      box-shadow: 0 0 10px rgba(0,0,0,0.1);
-    }
-    label {
-      display: block;
-      margin-top: 1rem;
-    }
-    input {
-      width: 100%;
-      padding: 0.5rem;
-      margin-top: 0.3rem;
-    }
-    select {
-      width: 100%;
-      padding: 0.5rem;
-      margin-top: 0.3rem;
-    }
-    button {
-      margin-top: 1.5rem;
-      background-color: #2e7d32;
-      color: white;
-      border: none;
-      padding: 1rem 2rem;
-      border-radius: 5px;
-      font-weight: bold;
-      cursor: pointer;
-    }
-    button:hover {
-      background-color: #1b5e20;
-    }
-    table {
-      width: 100%;
-      margin-top: 2rem;
-      border-collapse: collapse;
-    }
-    th, td {
-      padding: 0.8rem;
-      border: 1px solid #ccc;
-      text-align: center;
-    }
-    footer {
-      text-align: center;
-      padding: 2rem;
-      color: #777;
-    }
-  </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Simulador de Punto de Equilibrio y Rentabilidad</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<style>
+body {
+    font-family: 'Segoe UI', sans-serif;
+    margin: 0;
+    background-color: #f9f9f9;
+    color: #222;
+}
+header {
+    background-color: #001f3f;
+    color: white;
+    padding: 1rem;
+    text-align: center;
+}
+.container {
+    max-width: 1200px;
+    margin: 2rem auto;
+    background-color: white;
+    padding: 2rem;
+    border-radius: 12px;
+    box-shadow: 0 0 10px rgba(0,0,0,0.15);
+}
+h2 {
+    color: #800020; /* vino tinto */
+    border-bottom: 2px solid #ffcc00; /* mostaza */
+    padding-bottom: .5rem;
+}
+input, select {
+    padding: .4rem;
+    border-radius: 6px;
+    border: 1px solid #ccc;
+    width: 100%;
+}
+button {
+    background-color: #001f3f;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    padding: .6rem 1.2rem;
+    cursor: pointer;
+}
+button:hover {
+    background-color: #800020;
+}
+.table-container {
+    overflow-x: auto;
+}
+table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 1rem;
+}
+th, td {
+    border: 1px solid #ccc;
+    padding: .5rem;
+    text-align: center;
+}
+th {
+    background-color: #ffcc00;
+    color: #001f3f;
+}
+.interpretacion {
+    margin-top: 1rem;
+    font-weight: bold;
+    padding: 1rem;
+    border-radius: 8px;
+    text-align: center;
+}
+.verde { background-color: #d4edda; color: #155724; }
+.rojo { background-color: #f8d7da; color: #721c24; }
+.amarillo { background-color: #fff3cd; color: #856404; }
+</style>
 </head>
 <body>
-  <header>
-    <h1>Simulador de Punto de Equilibrio</h1>
-    <p>para múltiples productos con distintos métodos de precio</p>
-  </header>
+<header>
+    <h1 id="titulo">Simulador de Punto de Equilibrio y Rentabilidad</h1>
+    <button onclick="cambiarIdioma()">🌐 Español / English</button>
+</header>
 
-  <main>
-    <form id="formulario">
-      <label>Producto:
-        <input type="text" id="producto" required />
-      </label>
-      <label>Método de precio:
-        <select id="metodo">
-          <option value="margen">Por margen deseado (%)</option>
-          <option value="fijo">Precio fijo ($)</option>
-        </select>
-      </label>
-      <label>Valor del margen o precio:
-        <input type="number" id="valorMetodo" required />
-      </label>
-      <label>Costo variable ($):
-        <input type="number" id="costoVariable" required />
-      </label>
-      <label>Costo fijo total ($):
-        <input type="number" id="costoFijo" required />
-      </label>
-      <button type="submit">Agregar producto</button>
-    </form>
+<div class="container">
+    <h2 id="titulo_datos">Datos del Producto</h2>
+    <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:1rem;">
+        <div>
+            <label id="lblProducto">Nombre del producto:</label>
+            <input type="text" id="nombreProducto">
+        </div>
+        <div>
+            <label id="lblCostoVar">Costo variable unitario:</label>
+            <input type="number" id="costoVariable" step="0.01">
+        </div>
+        <div>
+            <label id="lblMetodo">Método de precio:</label>
+            <select id="metodoPrecio">
+                <option value="manual">Manual</option>
+                <option value="margen">Por margen</option>
+                <option value="mercado">Por mercado</option>
+            </select>
+        </div>
+        <div>
+            <label id="lblPrecio">Precio de venta unitario / Margen deseado (%):</label>
+            <input type="number" id="precioVenta" step="0.01">
+        </div>
+    </div>
 
-    <table id="tablaResultados">
-      <thead>
-        <tr>
-          <th>Producto</th>
-          <th>Precio Venta</th>
-          <th>Costo Variable</th>
-          <th>Margen Contribución</th>
-          <th>PE Unidades</th>
-          <th>PE Valor</th>
-        </tr>
-      </thead>
-      <tbody>
-      </tbody>
-    </table>
-  </main>
+    <h2 id="titulo_costos">Costos fijos</h2>
+    <div id="costosFijosContainer"></div>
+    <button onclick="agregarCostoFijo()" id="btnAgregarCosto">+ Agregar Costo Fijo</button>
 
-  <footer>
-    © 2025 Neodat · Mgs. Darío Hurtado Cuenca
-  </footer>
+    <h2 id="titulo_ventas">Volumen de ventas estimado</h2>
+    <input type="number" id="volumenVentas" step="1" value="1000">
 
-  <script>
-    const form = document.getElementById('formulario');
-    const tabla = document.querySelector('#tablaResultados tbody');
+    <button onclick="agregarProducto()" style="margin-top:1rem;" id="btnAgregarProd">Agregar producto</button>
 
-    form.addEventListener('submit', function(e) {
-      e.preventDefault();
+    <div class="table-container">
+        <table id="tablaResultados">
+            <thead>
+                <tr>
+                    <th id="thProducto">Producto</th>
+                    <th id="thMargen">Margen contribución</th>
+                    <th id="thPEu">P.E. unidades</th>
+                    <th id="thPEv">P.E. valor</th>
+                    <th id="thUtilidad">Utilidad estimada</th>
+                </tr>
+            </thead>
+            <tbody></tbody>
+        </table>
+    </div>
 
-      const producto = document.getElementById('producto').value;
-      const metodo = document.getElementById('metodo').value;
-      const valorMetodo = parseFloat(document.getElementById('valorMetodo').value);
-      const costoVariable = parseFloat(document.getElementById('costoVariable').value);
-      const costoFijo = parseFloat(document.getElementById('costoFijo').value);
+    <canvas id="grafico" style="margin-top:2rem;height:300px;"></canvas>
 
-      let precioVenta = 0;
-      if (metodo === 'margen') {
-        if (valorMetodo >= 100) return alert("El margen no puede ser mayor o igual al 100%.");
-        precioVenta = costoVariable / (1 - valorMetodo / 100);
-      } else {
-        precioVenta = valorMetodo;
-      }
+    <div id="interpretacion" class="interpretacion"></div>
 
-      const margenContribucion = precioVenta - costoVariable;
-      const peUnidades = costoFijo / margenContribucion;
-      const peValor = peUnidades * precioVenta;
+    <div style="margin-top:2rem;">
+        <button onclick="guardarDatos()" id="btnGuardar">Guardar datos</button>
+        <button onclick="cargarDatos()" id="btnCargar">Cargar datos</button>
+        <button onclick="limpiar()" id="btnLimpiar">Limpiar</button>
+    </div>
+</div>
 
-      const fila = document.createElement('tr');
-      fila.innerHTML = `
-        <td>${producto}</td>
-        <td>$${precioVenta.toFixed(2)}</td>
-        <td>$${costoVariable.toFixed(2)}</td>
-        <td>$${margenContribucion.toFixed(2)}</td>
-        <td>${Math.ceil(peUnidades)}</td>
-        <td>$${peValor.toFixed(2)}</td>
-      `;
-      tabla.appendChild(fila);
+<script>
+let idioma = "es";
+let productos = [];
+let costosFijos = [];
 
-      form.reset();
+function cambiarIdioma() {
+    idioma = (idioma === "es") ? "en" : "es";
+    const textos = {
+        es: {
+            titulo: "Simulador de Punto de Equilibrio y Rentabilidad",
+            titulo_datos: "Datos del Producto",
+            titulo_costos: "Costos fijos",
+            titulo_ventas: "Volumen de ventas estimado",
+            lblProducto: "Nombre del producto:",
+            lblCostoVar: "Costo variable unitario:",
+            lblMetodo: "Método de precio:",
+            lblPrecio: "Precio de venta unitario / Margen deseado (%):",
+            btnAgregarCosto: "+ Agregar Costo Fijo",
+            btnAgregarProd: "Agregar producto",
+            thProducto: "Producto",
+            thMargen: "Margen contribución",
+            thPEu: "P.E. unidades",
+            thPEv: "P.E. valor",
+            thUtilidad: "Utilidad estimada",
+            btnGuardar: "Guardar datos",
+            btnCargar: "Cargar datos",
+            btnLimpiar: "Limpiar"
+        },
+        en: {
+            titulo: "Break-Even and Profitability Simulator",
+            titulo_datos: "Product Data",
+            titulo_costos: "Fixed Costs",
+            titulo_ventas: "Estimated Sales Volume",
+            lblProducto: "Product name:",
+            lblCostoVar: "Unit variable cost:",
+            lblMetodo: "Pricing method:",
+            lblPrecio: "Unit price / Desired margin (%):",
+            btnAgregarCosto: "+ Add Fixed Cost",
+            btnAgregarProd: "Add product",
+            thProducto: "Product",
+            thMargen: "Contribution Margin",
+            thPEu: "Break-even (units)",
+            thPEv: "Break-even (value)",
+            thUtilidad: "Expected profit",
+            btnGuardar: "Save data",
+            btnCargar: "Load data",
+            btnLimpiar: "Clear"
+        }
+    };
+    for (let id in textos[idioma]) {
+        document.getElementById(id).textContent = textos[idioma][id];
+    }
+}
+
+function agregarCostoFijo() {
+    const div = document.createElement("div");
+    const input = document.createElement("input");
+    input.type = "number";
+    input.placeholder = idioma === "es" ? "Costo fijo" : "Fixed cost";
+    input.step = "0.01";
+    input.classList.add("costoFijo");
+    div.appendChild(input);
+    document.getElementById("costosFijosContainer").appendChild(div);
+}
+
+function obtenerCostosFijosTotales() {
+    let total = 0;
+    document.querySelectorAll(".costoFijo").forEach(c => total += parseFloat(c.value) || 0);
+    return total;
+}
+
+function agregarProducto() {
+    const nombre = document.getElementById("nombreProducto").value;
+    const costoVariable = parseFloat(document.getElementById("costoVariable").value);
+    const metodo = document.getElementById("metodoPrecio").value;
+    const precioInput = parseFloat(document.getElementById("precioVenta").value);
+    const volumen = parseFloat(document.getElementById("volumenVentas").value);
+    const costosFijosTotales = obtenerCostosFijosTotales();
+
+    if (!nombre || isNaN(costoVariable) || isNaN(precioInput)) {
+        alert("Complete todos los campos numéricos.");
+        return;
+    }
+
+    let precioVenta;
+    if (metodo === "margen") {
+        precioVenta = costoVariable / (1 - (precioInput / 100));
+    } else {
+        precioVenta = precioInput;
+    }
+
+    const margenContrib = precioVenta - costoVariable;
+    const peUnidades = costosFijosTotales / margenContrib;
+    const peValor = peUnidades * precioVenta;
+    const utilidad = (precioVenta - costoVariable) * volumen - costosFijosTotales;
+
+    productos.push({ nombre, margenContrib, peUnidades, peValor, utilidad });
+
+    actualizarTabla();
+    actualizarGrafico();
+    mostrarInterpretacion(utilidad, costosFijosTotales);
+}
+
+function formatoMoneda(valor) {
+    return valor.toLocaleString("es-EC", { style: "currency", currency: "USD" });
+}
+
+function actualizarTabla() {
+    const tbody = document.querySelector("#tablaResultados tbody");
+    tbody.innerHTML = "";
+    productos.forEach(p => {
+        const fila = document.createElement("tr");
+        fila.innerHTML = `
+            <td>${p.nombre}</td>
+            <td>${formatoMoneda(p.margenContrib)}</td>
+            <td>${p.peUnidades.toFixed(2)}</td>
+            <td>${formatoMoneda(p.peValor)}</td>
+            <td>${formatoMoneda(p.utilidad)}</td>
+        `;
+        tbody.appendChild(fila);
     });
-  </script>
+}
+
+let chart;
+function actualizarGrafico() {
+    const ctx = document.getElementById("grafico");
+    const labels = productos.map(p => p.nombre);
+    const ingresos = productos.map(p => p.peValor);
+    const utilidad = productos.map(p => p.utilidad);
+    if (chart) chart.destroy();
+    chart = new Chart(ctx, {
+        type: "bar",
+        data: {
+            labels,
+            datasets: [
+                { label: idioma === "es" ? "P.E. valor" : "Break-even value", data: ingresos, backgroundColor: "#001f3f" },
+                { label: idioma === "es" ? "Utilidad" : "Profit", data: utilidad, backgroundColor: "#ffcc00" }
+            ]
+        },
+        options: { responsive: true, plugins: { legend: { position: "bottom" } } }
+    });
+}
+
+function mostrarInterpretacion(utilidad) {
+    const div = document.getElementById("interpretacion");
+    if (utilidad > 0) {
+        div.textContent = idioma === "es" ? "El negocio está por encima del punto de equilibrio (Ganancia)" : "The business is above break-even (Profit)";
+        div.className = "interpretacion verde";
+    } else if (utilidad === 0) {
+        div.textContent = idioma === "es" ? "El negocio está en punto de equilibrio" : "The business is at break-even";
+        div.className = "interpretacion amarillo";
+    } else {
+        div.textContent = idioma === "es" ? "El negocio está por debajo del punto de equilibrio (Pérdida)" : "The business is below break-even (Loss)";
+        div.className = "interpretacion rojo";
+    }
+}
+
+function guardarDatos() {
+    localStorage.setItem("productos", JSON.stringify(productos));
+    alert("Datos guardados.");
+}
+
+function cargarDatos() {
+    const data = JSON.parse(localStorage.getItem("productos") || "[]");
+    productos = data;
+    actualizarTabla();
+    actualizarGrafico();
+}
+
+function limpiar() {
+    productos = [];
+    document.querySelector("#tablaResultados tbody").innerHTML = "";
+    if (chart) chart.destroy();
+    document.getElementById("interpretacion").textContent = "";
+}
+</script>
 </body>
 </html>
