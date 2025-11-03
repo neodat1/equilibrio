@@ -6,158 +6,513 @@
   <title>Simulador Punto de Equilibrio</title>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <style>
+    :root {
+      --primary-color: #1a1f4f;
+      --secondary-color: #8c1c13;
+      --light-bg: #f4f6f9;
+      --success-color: #dcedc8;
+      --success-text: #2e7d32;
+      --warning-color: #fff9c4;
+      --warning-text: #f9a825;
+      --danger-color: #ffcdd2;
+      --danger-text: #c62828;
+    }
+    
     body {
       font-family: 'Segoe UI', sans-serif;
-      background-color: #f4f6f9;
+      background-color: var(--light-bg);
       margin: 0;
       padding: 0;
+      line-height: 1.6;
     }
+    
     header {
-      background-color: #1a1f4f;
+      background-color: var(--primary-color);
       color: white;
       padding: 20px;
       text-align: center;
       font-size: 24px;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
     }
+    
     .container {
       max-width: 1200px;
       margin: 0 auto;
       padding: 20px;
     }
+    
     section {
       display: none;
       margin-bottom: 40px;
+      background-color: white;
+      padding: 25px;
+      border-radius: 8px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.05);
     }
+    
     section.active {
       display: block;
+      animation: fadeIn 0.5s ease-in-out;
     }
+    
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    
+    h2 {
+      color: var(--primary-color);
+      margin-top: 0;
+      border-bottom: 1px solid #eee;
+      padding-bottom: 10px;
+    }
+    
     label {
       font-weight: bold;
       display: block;
-      margin-top: 10px;
+      margin-top: 15px;
+      color: #333;
     }
+    
     input, select, button {
-      padding: 10px;
+      padding: 12px;
       font-size: 1rem;
       margin-top: 5px;
       margin-bottom: 15px;
       width: 100%;
       box-sizing: border-box;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      transition: all 0.3s ease;
     }
+    
+    input:focus, select:focus {
+      outline: none;
+      border-color: var(--primary-color);
+      box-shadow: 0 0 0 2px rgba(26, 31, 79, 0.2);
+    }
+    
     button {
-      background-color: #8c1c13;
+      background-color: var(--secondary-color);
       color: white;
       border: none;
       cursor: pointer;
       border-radius: 4px;
+      font-weight: bold;
+      margin-top: 15px;
     }
+    
     button:hover {
       background-color: #a42d25;
+      transform: translateY(-2px);
+      box-shadow: 0 4px 8px rgba(0,0,0,0.1);
     }
+    
+    button.secondary {
+      background-color: #6c757d;
+    }
+    
+    button.secondary:hover {
+      background-color: #5a6268;
+    }
+    
+    .button-group {
+      display: flex;
+      gap: 10px;
+      margin-top: 20px;
+    }
+    
+    .button-group button {
+      flex: 1;
+    }
+    
     table {
       width: 100%;
       border-collapse: collapse;
+      margin-top: 20px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
     }
+    
     th, td {
-      border: 1px solid #ccc;
-      padding: 10px;
+      border: 1px solid #ddd;
+      padding: 12px;
       text-align: left;
     }
+    
+    th {
+      background-color: var(--primary-color);
+      color: white;
+    }
+    
+    tr:nth-child(even) {
+      background-color: #f8f9fa;
+    }
+    
     .actions button {
       width: auto;
       margin-right: 5px;
+      padding: 8px 12px;
+      font-size: 0.9rem;
     }
+    
     .summary {
       font-weight: bold;
-      padding: 10px;
+      padding: 15px;
       border-radius: 4px;
+      margin: 15px 0;
     }
-    .summary.green { background-color: #dcedc8; color: #2e7d32; }
-    .summary.yellow { background-color: #fff9c4; color: #f9a825; }
-    .summary.red { background-color: #ffcdd2; color: #c62828; }
+    
+    .summary.green { 
+      background-color: var(--success-color); 
+      color: var(--success-text); 
+    }
+    
+    .summary.yellow { 
+      background-color: var(--warning-color); 
+      color: var(--warning-text); 
+    }
+    
+    .summary.red { 
+      background-color: var(--danger-color); 
+      color: var(--danger-text); 
+    }
+    
+    .form-group {
+      margin-bottom: 20px;
+    }
+    
+    .price-method-group {
+      display: none;
+    }
+    
+    #manualPriceGroup, #margenGroup {
+      margin-top: 15px;
+    }
+    
+    .card {
+      background-color: white;
+      border-radius: 8px;
+      padding: 20px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+      margin-bottom: 20px;
+    }
+    
+    .progress-bar {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 30px;
+      position: relative;
+    }
+    
+    .progress-bar::before {
+      content: '';
+      position: absolute;
+      top: 15px;
+      left: 0;
+      right: 0;
+      height: 4px;
+      background-color: #e9ecef;
+      z-index: 1;
+    }
+    
+    .progress-step {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      position: relative;
+      z-index: 2;
+    }
+    
+    .step-number {
+      width: 30px;
+      height: 30px;
+      border-radius: 50%;
+      background-color: #e9ecef;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: bold;
+      margin-bottom: 5px;
+    }
+    
+    .step-label {
+      font-size: 0.9rem;
+      color: #6c757d;
+    }
+    
+    .progress-step.active .step-number {
+      background-color: var(--primary-color);
+      color: white;
+    }
+    
+    .progress-step.active .step-label {
+      color: var(--primary-color);
+      font-weight: bold;
+    }
+    
+    .progress-step.completed .step-number {
+      background-color: var(--secondary-color);
+      color: white;
+    }
+    
+    @media (max-width: 768px) {
+      .container {
+        padding: 10px;
+      }
+      
+      section {
+        padding: 15px;
+      }
+      
+      .button-group {
+        flex-direction: column;
+      }
+      
+      .progress-bar {
+        flex-wrap: wrap;
+      }
+      
+      .progress-step {
+        margin-bottom: 10px;
+      }
+    }
   </style>
 </head>
 <body>
   <header>Simulador Punto de Equilibrio</header>
   <div class="container">
+    <div class="progress-bar">
+      <div class="progress-step active" id="step1">
+        <div class="step-number">1</div>
+        <div class="step-label">Costos Fijos</div>
+      </div>
+      <div class="progress-step" id="step2">
+        <div class="step-number">2</div>
+        <div class="step-label">Productos</div>
+      </div>
+      <div class="progress-step" id="step3">
+        <div class="step-number">3</div>
+        <div class="step-label">Cálculos</div>
+      </div>
+    </div>
+
     <section id="fase1" class="active">
       <h2>Fase 1: Ingreso de costos fijos</h2>
-      <label>Concepto:</label>
-      <input type="text" id="costoConcepto">
-      <label>Monto:</label>
-      <input type="number" id="costoMonto">
-      <button onclick="agregarCostoFijo()">Agregar</button>
-      <table>
-        <thead><tr><th>Concepto</th><th>Monto</th><th>Acciones</th></tr></thead>
-        <tbody id="tablaCostos"></tbody>
-      </table>
-      <button onclick="goToFase2()">Siguiente</button>
+      <div class="card">
+        <div class="form-group">
+          <label for="costoConcepto">Concepto:</label>
+          <input type="text" id="costoConcepto" placeholder="Ej: Alquiler, Salarios, etc.">
+        </div>
+        <div class="form-group">
+          <label for="costoMonto">Monto:</label>
+          <input type="number" id="costoMonto" min="0" step="0.01" placeholder="0.00">
+        </div>
+        <button onclick="agregarCostoFijo()">Agregar Costo Fijo</button>
+      </div>
+      
+      <div class="card">
+        <h3>Costos Fijos Registrados</h3>
+        <table>
+          <thead>
+            <tr>
+              <th>Concepto</th>
+              <th>Monto</th>
+              <th>Acciones</th>
+            </tr>
+          </thead>
+          <tbody id="tablaCostos"></tbody>
+          <tfoot>
+            <tr>
+              <th>Total</th>
+              <th id="totalCostos">$0.00</th>
+              <th></th>
+            </tr>
+          </tfoot>
+        </table>
+      </div>
+      
+      <div class="button-group">
+        <button onclick="goToFase2()">Siguiente</button>
+      </div>
     </section>
 
     <section id="fase2">
       <h2>Fase 2: Ingreso de productos</h2>
-      <label>Nombre del producto:</label>
-      <input type="text" id="productName">
-      <label>Costo variable unitario:</label>
-      <input type="number" id="unitCost">
-      <button onclick="addProductToList()">Agregar</button>
-      <table id="tablaProductos">
-  <thead><tr><th>Producto</th><th>Costo Unitario</th><th>Acciones</th></tr></thead>
-  <tbody id="productTableBody"></tbody>
-</table>
-      <button onclick="goToFase3()">Siguiente</button>
+      <div class="card">
+        <div class="form-group">
+          <label for="productName">Nombre del producto:</label>
+          <input type="text" id="productName" placeholder="Nombre del producto">
+        </div>
+        <div class="form-group">
+          <label for="unitCost">Costo variable unitario:</label>
+          <input type="number" id="unitCost" min="0" step="0.01" placeholder="0.00">
+        </div>
+        <button onclick="addProductToList()">Agregar Producto</button>
+      </div>
+      
+      <div class="card">
+        <h3>Productos Registrados</h3>
+        <table id="tablaProductos">
+          <thead>
+            <tr>
+              <th>Producto</th>
+              <th>Costo Unitario</th>
+              <th>Acciones</th>
+            </tr>
+          </thead>
+          <tbody id="productTableBody"></tbody>
+        </table>
+      </div>
+      
+      <div class="button-group">
+        <button class="secondary" onclick="goToFase1()">Anterior</button>
+        <button onclick="goToFase3()">Siguiente</button>
+      </div>
     </section>
 
     <section id="fase3">
       <h2>Fase 3: Selección de producto y método de precio</h2>
-      <label for="selectedProduct">Producto</label>
-      <select id="selectedProduct"></select>
-      <label for="priceMethod">Método de precio</label>
-      <select id="priceMethod" onchange="togglePriceMethod()">
-        <option value="manual">Manual</option>
-        <option value="margen">Por margen</option>
-      </select>
-<label>Cantidad estimada a vender:</label>
-<input type="number" id="estimatedQty" step="1">
-$1
-        <label>Precio de venta unitario:</label>
-        <input type="number" id="unitPrice" step="0.01">
+      
+      <div class="card">
+        <div class="form-group">
+          <label for="selectedProduct">Producto:</label>
+          <select id="selectedProduct"></select>
+        </div>
+        
+        <div class="form-group">
+          <label for="priceMethod">Método de precio:</label>
+          <select id="priceMethod" onchange="togglePriceMethod()">
+            <option value="manual">Manual</option>
+            <option value="margen">Por margen</option>
+          </select>
+        </div>
+        
+        <div class="form-group">
+          <label for="estimatedQty">Cantidad estimada a vender:</label>
+          <input type="number" id="estimatedQty" step="1" min="0" placeholder="0">
+        </div>
+        
+        <div id="manualPriceGroup" class="price-method-group">
+          <div class="form-group">
+            <label for="unitPrice">Precio de venta unitario:</label>
+            <input type="number" id="unitPrice" step="0.01" min="0" placeholder="0.00">
+          </div>
+        </div>
+        
+        <div id="margenGroup" class="price-method-group" style="display: none;">
+          <div class="form-group">
+            <label for="desiredMargin">Margen deseado (%):</label>
+            <input type="number" id="desiredMargin" step="0.01" min="0" max="100" placeholder="0.00">
+          </div>
+        </div>
+        
+        <div class="button-group">
+          <button onclick="calcularResultados()">Calcular</button>
+          <button onclick="agregarResumen()">Agregar al resumen general</button>
+        </div>
       </div>
-      <div id="margenGroup" style="display: none;">
-        <label>Margen deseado (%):</label>
-        <input type="number" id="desiredMargin" step="0.01">
-      </div>
-      <button onclick="calcularResultados()">Calcular</button>
-      <button onclick="agregarResumen()">Agregar al resumen general</button>
-<div id="resumenGeneral"></div>
-<div id="resultado"></div>
+      
+      <div id="resultado"></div>
+      <div id="resumenGeneral"></div>
     </section>
   </div>
 
   <script>
+    // Variables globales
     let fixedCosts = 0;
     let listaCostos = [];
     const products = [];
     let chart;
-const resumen = [];
+    const resumen = [];
+    let currentFase = 1;
 
-    function agregarCostoFijo() {
-      const concepto = document.getElementById("costoConcepto").value;
-      const monto = parseFloat(document.getElementById("costoMonto").value);
-      if (concepto && !isNaN(monto)) {
-        listaCostos.push({ concepto, monto });
-        renderTablaCostos();
-        document.getElementById("costoConcepto").value = "";
-        document.getElementById("costoMonto").value = "";
+    // Funciones para manejar las fases
+    function mostrarFase(id) {
+      document.querySelectorAll("section").forEach(sec => sec.classList.remove("active"));
+      document.getElementById(id).classList.add("active");
+      
+      // Actualizar barra de progreso
+      document.querySelectorAll(".progress-step").forEach(step => {
+        step.classList.remove("active", "completed");
+      });
+      
+      if (id === "fase1") {
+        document.getElementById("step1").classList.add("active");
+        currentFase = 1;
+      } else if (id === "fase2") {
+        document.getElementById("step1").classList.add("completed");
+        document.getElementById("step2").classList.add("active");
+        currentFase = 2;
+      } else if (id === "fase3") {
+        document.getElementById("step1").classList.add("completed");
+        document.getElementById("step2").classList.add("completed");
+        document.getElementById("step3").classList.add("active");
+        currentFase = 3;
       }
+    }
+
+    function goToFase1() {
+      mostrarFase("fase1");
+    }
+
+    function goToFase2() {
+      if (listaCostos.length === 0) {
+        alert("Debe agregar al menos un costo fijo para continuar.");
+        return;
+      }
+      fixedCosts = listaCostos.reduce((acc, item) => acc + item.monto, 0);
+      mostrarFase("fase2");
+    }
+
+    function goToFase3() {
+      if (products.length === 0) {
+        alert("Debe agregar al menos un producto para continuar.");
+        return;
+      }
+      mostrarFase("fase3");
+    }
+
+    // Funciones para costos fijos
+    function agregarCostoFijo() {
+      const concepto = document.getElementById("costoConcepto").value.trim();
+      const monto = parseFloat(document.getElementById("costoMonto").value);
+      
+      if (!concepto) {
+        alert("Por favor, ingrese un concepto para el costo fijo.");
+        return;
+      }
+      
+      if (isNaN(monto) || monto <= 0) {
+        alert("Por favor, ingrese un monto válido mayor a cero.");
+        return;
+      }
+      
+      listaCostos.push({ concepto, monto });
+      renderTablaCostos();
+      document.getElementById("costoConcepto").value = "";
+      document.getElementById("costoMonto").value = "";
+      document.getElementById("costoConcepto").focus();
     }
 
     function renderTablaCostos() {
       const tbody = document.getElementById("tablaCostos");
       tbody.innerHTML = "";
+      let total = 0;
+      
       listaCostos.forEach((item, i) => {
-        tbody.innerHTML += `<tr><td>${item.concepto}</td><td>$${item.monto.toFixed(2)}</td><td class='actions'><button onclick='editarCosto(${i})'>Editar</button><button onclick='eliminarCosto(${i})'>Eliminar</button></td></tr>`;
+        tbody.innerHTML += `
+          <tr>
+            <td>${item.concepto}</td>
+            <td>$${item.monto.toFixed(2)}</td>
+            <td class="actions">
+              <button onclick='editarCosto(${i})'>Editar</button>
+              <button onclick='eliminarCosto(${i})'>Eliminar</button>
+            </td>
+          </tr>`;
+        total += item.monto;
       });
+      
+      document.getElementById("totalCostos").textContent = `$${total.toFixed(2)}`;
     }
 
     function editarCosto(i) {
@@ -169,35 +524,50 @@ const resumen = [];
     }
 
     function eliminarCosto(i) {
-      listaCostos.splice(i, 1);
-      renderTablaCostos();
-    }
-
-    function goToFase2() {
-      fixedCosts = listaCostos.reduce((acc, item) => acc + item.monto, 0);
-      mostrarFase("fase2");
-    }
-
-    function addProductToList() {
-      const name = document.getElementById("productName").value;
-      const cost = parseFloat(document.getElementById("unitCost").value);
-      if (name && !isNaN(cost)) {
-        products.push({ name, cost });
-        renderTablaProductos();
-        document.getElementById("productName").value = "";
-        document.getElementById("unitCost").value = "";
+      if (confirm("¿Está seguro de que desea eliminar este costo fijo?")) {
+        listaCostos.splice(i, 1);
+        renderTablaCostos();
       }
     }
 
+    // Funciones para productos
+    function addProductToList() {
+      const name = document.getElementById("productName").value.trim();
+      const cost = parseFloat(document.getElementById("unitCost").value);
+      
+      if (!name) {
+        alert("Por favor, ingrese un nombre para el producto.");
+        return;
+      }
+      
+      if (isNaN(cost) || cost <= 0) {
+        alert("Por favor, ingrese un costo válido mayor a cero.");
+        return;
+      }
+      
+      products.push({ name, cost });
+      renderTablaProductos();
+      document.getElementById("productName").value = "";
+      document.getElementById("unitCost").value = "";
+      document.getElementById("productName").focus();
+    }
+
     function renderTablaProductos() {
-  const tbody = document.getElementById("productTableBody");
-  tbody.innerHTML = "";
-  products.forEach((p, i) => {
-    tbody.innerHTML += `<tr><td>${p.name}</td><td>$${p.cost.toFixed(2)}</td><td><button onclick='editarProducto(${i})'>Editar</button><button onclick='eliminarProducto(${i})'>Eliminar</button></td></tr>`;
-  });
-  actualizarSelectProducto();
-} ($${p.cost.toFixed(2)}) <button onclick='editarProducto(${i})'>Editar</button> <button onclick='eliminarProducto(${i})'>Eliminar</button></li>`;
+      const tbody = document.getElementById("productTableBody");
+      tbody.innerHTML = "";
+      
+      products.forEach((p, i) => {
+        tbody.innerHTML += `
+          <tr>
+            <td>${p.name}</td>
+            <td>$${p.cost.toFixed(2)}</td>
+            <td class="actions">
+              <button onclick='editarProducto(${i})'>Editar</button>
+              <button onclick='eliminarProducto(${i})'>Eliminar</button>
+            </td>
+          </tr>`;
       });
+      
       actualizarSelectProducto();
     }
 
@@ -210,30 +580,28 @@ const resumen = [];
     }
 
     function eliminarProducto(i) {
-      products.splice(i, 1);
-      renderTablaProductos();
+      if (confirm("¿Está seguro de que desea eliminar este producto?")) {
+        products.splice(i, 1);
+        renderTablaProductos();
+      }
     }
 
     function actualizarSelectProducto() {
       const select = document.getElementById("selectedProduct");
       select.innerHTML = "";
+      
       products.forEach(p => {
         const option = document.createElement("option");
         option.value = p.name;
-        option.innerText = p.name;
+        option.textContent = `${p.name} ($${p.cost.toFixed(2)})`;
         select.appendChild(option);
       });
+      
+      // Mostrar el método de precio manual por defecto
+      togglePriceMethod();
     }
 
-    function goToFase3() {
-      mostrarFase("fase3");
-    }
-
-    function mostrarFase(id) {
-      document.querySelectorAll("section").forEach(sec => sec.classList.remove("active"));
-      document.getElementById(id).classList.add("active");
-    }
-
+    // Funciones para cálculos
     function togglePriceMethod() {
       const method = document.getElementById("priceMethod").value;
       document.getElementById("manualPriceGroup").style.display = method === 'manual' ? 'block' : 'none';
@@ -241,104 +609,248 @@ const resumen = [];
     }
 
     function calcularResultados() {
-  const selectedName = document.getElementById("selectedProduct").value;
-  const product = products.find(p => p.name === selectedName);
-  const method = document.getElementById("priceMethod").value;
-  let unitPrice = 0;
-  if (method === 'manual') {
-    unitPrice = parseFloat(document.getElementById("unitPrice").value);
-  } else {
-    const margin = parseFloat(document.getElementById("desiredMargin").value);
-    unitPrice = product.cost / (1 - margin / 100);
-  }
-  const contribution = unitPrice - product.cost;
-  const peUnits = fixedCosts / contribution;
-  const peValue = peUnits * unitPrice;
-
-  let status, colorClass;
-  if (peUnits === 0) { status = 'Equilibrio'; colorClass = 'yellow'; }
-  else if (peUnits > 0 && contribution > 0) { status = 'Ganancia'; colorClass = 'green'; }
-  else { status = 'Pérdida'; colorClass = 'red'; }
-
-  document.getElementById("resultado").innerHTML = `
-    <div class="summary ${colorClass}">
-      Precio Unitario: $${unitPrice.toFixed(2)}<br>
-      Margen de contribución: $${contribution.toFixed(2)}<br>
-      Punto de equilibrio (unidades): ${peUnits.toFixed(2)}<br>
-      Punto de equilibrio (valor): $${peValue.toFixed(2)}<br>
-      Estado: ${status}
-    </div>
-    <canvas id="chartCanvas"></canvas>
-  `;
-
-  const ctx = document.getElementById("chartCanvas").getContext("2d");
-  const unidades = Array.from({length: 11}, (_, i) => i * Math.ceil(peUnits / 5));
-  const ingresos = unidades.map(u => u * unitPrice);
-  const costosTotales = unidades.map(u => fixedCosts + (product.cost * u));
-
-  if (chart) chart.destroy();
-  chart = new Chart(ctx, {
-    type: 'line',
-    data: {
-      labels: unidades,
-      datasets: [
-        { label: 'Ingresos Totales', data: ingresos, borderColor: '#1a1f4f', fill: false },
-        { label: 'Costos Totales', data: costosTotales, borderColor: '#8c1c13', fill: false }
-      ]
-    },
-    options: {
-      responsive: true,
-      plugins: {
-        title: {
-          display: true,
-          text: 'Ingreso vs. Costo Total'
-        }
-      },
-      scales: {
-        x: {
-          title: {
-            display: true,
-            text: 'Unidades Vendidas'
-          }
-        },
-        y: {
-          title: {
-            display: true,
-            text: 'Valor ($)'
-          }
-        }
+      const selectedName = document.getElementById("selectedProduct").value;
+      const product = products.find(p => p.name === selectedName);
+      
+      if (!product) {
+        alert("Por favor, seleccione un producto válido.");
+        return;
       }
+      
+      const method = document.getElementById("priceMethod").value;
+      let unitPrice = 0;
+      
+      if (method === 'manual') {
+        unitPrice = parseFloat(document.getElementById("unitPrice").value);
+        if (isNaN(unitPrice) || unitPrice <= 0) {
+          alert("Por favor, ingrese un precio de venta válido mayor a cero.");
+          return;
+        }
+      } else {
+        const margin = parseFloat(document.getElementById("desiredMargin").value);
+        if (isNaN(margin) || margin <= 0 || margin >= 100) {
+          alert("Por favor, ingrese un margen válido entre 0 y 100%.");
+          return;
+        }
+        unitPrice = product.cost / (1 - margin / 100);
+        document.getElementById("unitPrice").value = unitPrice.toFixed(2);
+      }
+      
+      const contribution = unitPrice - product.cost;
+      const peUnits = fixedCosts / contribution;
+      const peValue = peUnits * unitPrice;
+
+      let status, colorClass;
+      if (peUnits === 0) { 
+        status = 'Equilibrio'; 
+        colorClass = 'yellow'; 
+      } else if (peUnits > 0 && contribution > 0) { 
+        status = 'Ganancia'; 
+        colorClass = 'green'; 
+      } else { 
+        status = 'Pérdida'; 
+        colorClass = 'red'; 
+      }
+
+      document.getElementById("resultado").innerHTML = `
+        <div class="card">
+          <h3>Resultados del Cálculo</h3>
+          <div class="summary ${colorClass}">
+            <p><strong>Producto:</strong> ${product.name}</p>
+            <p><strong>Precio Unitario:</strong> $${unitPrice.toFixed(2)}</p>
+            <p><strong>Margen de contribución:</strong> $${contribution.toFixed(2)}</p>
+            <p><strong>Punto de equilibrio (unidades):</strong> ${Math.ceil(peUnits)}</p>
+            <p><strong>Punto de equilibrio (valor):</strong> $${peValue.toFixed(2)}</p>
+            <p><strong>Estado:</strong> ${status}</p>
+          </div>
+          <canvas id="chartCanvas"></canvas>
+        </div>
+      `;
+
+      // Generar gráfico
+      const ctx = document.getElementById("chartCanvas").getContext("2d");
+      const maxUnits = Math.max(peUnits * 2, 100); // Mostrar hasta el doble del punto de equilibrio o 100 unidades
+      const unidades = Array.from({length: 11}, (_, i) => Math.ceil(i * maxUnits / 10));
+      const ingresos = unidades.map(u => u * unitPrice);
+      const costosTotales = unidades.map(u => fixedCosts + (product.cost * u));
+
+      if (chart) chart.destroy();
+      chart = new Chart(ctx, {
+        type: 'line',
+        data: {
+          labels: unidades,
+          datasets: [
+            { 
+              label: 'Ingresos Totales', 
+              data: ingresos, 
+              borderColor: '#1a1f4f', 
+              backgroundColor: 'rgba(26, 31, 79, 0.1)',
+              fill: true,
+              tension: 0.4
+            },
+            { 
+              label: 'Costos Totales', 
+              data: costosTotales, 
+              borderColor: '#8c1c13', 
+              backgroundColor: 'rgba(140, 28, 19, 0.1)',
+              fill: true,
+              tension: 0.4
+            }
+          ]
+        },
+        options: {
+          responsive: true,
+          plugins: {
+            title: {
+              display: true,
+              text: 'Análisis de Punto de Equilibrio'
+            },
+            tooltip: {
+              mode: 'index',
+              intersect: false
+            }
+          },
+          scales: {
+            x: {
+              title: {
+                display: true,
+                text: 'Unidades Vendidas'
+              }
+            },
+            y: {
+              title: {
+                display: true,
+                text: 'Valor ($)'
+              },
+              beginAtZero: true
+            }
+          }
+        }
+      });
     }
-  });
 
-  const estimatedQty = parseFloat(document.getElementById("estimatedQty").value);
-  if (!isNaN(estimatedQty)) {
-    resumen.push({ producto: product.name, precio: unitPrice, contribucion: contribution, cantidad: estimatedQty });
-  }
-}
+    function agregarResumen() {
+      const selectedName = document.getElementById("selectedProduct").value;
+      const product = products.find(p => p.name === selectedName);
+      const estimatedQty = parseFloat(document.getElementById("estimatedQty").value);
+      
+      if (!product) {
+        alert("Por favor, seleccione un producto válido.");
+        return;
+      }
+      
+      if (isNaN(estimatedQty) || estimatedQty <= 0) {
+        alert("Por favor, ingrese una cantidad estimada válida mayor a cero.");
+        return;
+      }
+      
+      const unitPrice = parseFloat(document.getElementById("unitPrice").value);
+      if (isNaN(unitPrice) || unitPrice <= 0) {
+        alert("Por favor, calcule primero el precio unitario antes de agregar al resumen.");
+        return;
+      }
+      
+      const contribution = unitPrice - product.cost;
+      
+      // Verificar si el producto ya está en el resumen
+      const existingIndex = resumen.findIndex(p => p.producto === product.name);
+      if (existingIndex !== -1) {
+        resumen[existingIndex] = { 
+          producto: product.name, 
+          precio: unitPrice, 
+          contribucion: contribution, 
+          cantidad: estimatedQty 
+        };
+      } else {
+        resumen.push({ 
+          producto: product.name, 
+          precio: unitPrice, 
+          contribucion: contribution, 
+          cantidad: estimatedQty 
+        });
+      }
+      
+      renderResumenGeneral();
+    }
 
-function agregarResumen() {
-  if (resumen.length === 0) return;
-  let resumenHTML = `<h3>Resumen General</h3><table><thead><tr><th>Producto</th><th>Precio Unitario</th><th>Margen de Contribución</th></tr></thead><tbody>`;
-  resumen.forEach(p => {
-    resumenHTML += `<tr><td>${p.producto}</td><td>$${p.precio.toFixed(2)}</td><td>$${p.contribucion.toFixed(2)}</td></tr>`;
-  });
-  resumenHTML += '</tbody></table>';
+    function renderResumenGeneral() {
+      if (resumen.length === 0) {
+        document.getElementById("resumenGeneral").innerHTML = "";
+        return;
+      }
+      
+      let resumenHTML = `
+        <div class="card">
+          <h3>Resumen General</h3>
+          <table>
+            <thead>
+              <tr>
+                <th>Producto</th>
+                <th>Precio Unitario</th>
+                <th>Margen de Contribución</th>
+                <th>Cantidad Estimada</th>
+                <th>Contribución Total</th>
+              </tr>
+            </thead>
+            <tbody>`;
+      
+      let ingresoTotal = 0;
+      let contribucionTotal = 0;
+      
+      resumen.forEach(p => {
+        const contribucionProducto = p.contribucion * p.cantidad;
+        const ingresoProducto = p.precio * p.cantidad;
+        
+        resumenHTML += `
+          <tr>
+            <td>${p.producto}</td>
+            <td>$${p.precio.toFixed(2)}</td>
+            <td>$${p.contribucion.toFixed(2)}</td>
+            <td>${p.cantidad}</td>
+            <td>$${contribucionProducto.toFixed(2)}</td>
+          </tr>`;
+        
+        ingresoTotal += ingresoProducto;
+        contribucionTotal += contribucionProducto;
+      });
+      
+      resumenHTML += `
+            </tbody>
+            <tfoot>
+              <tr>
+                <th colspan="4">Total</th>
+                <th>$${contribucionTotal.toFixed(2)}</th>
+              </tr>
+            </tfoot>
+          </table>`;
+      
+      // Cálculo del punto de equilibrio general
+      const peGeneral = fixedCosts / (contribucionTotal / ingresoTotal);
+      const estadoGeneral = contribucionTotal > fixedCosts ? 'Ganancia' : 
+                           (contribucionTotal === fixedCosts ? 'Equilibrio' : 'Pérdida');
+      
+      let estadoClass = 'yellow';
+      if (estadoGeneral === 'Ganancia') estadoClass = 'green';
+      else if (estadoGeneral === 'Pérdida') estadoClass = 'red';
+      
+      resumenHTML += `
+          <div class="summary ${estadoClass}">
+            <p><strong>Contribución Total:</strong> $${contribucionTotal.toFixed(2)}</p>
+            <p><strong>Ingreso Total:</strong> $${ingresoTotal.toFixed(2)}</p>
+            <p><strong>Costos Fijos Totales:</strong> $${fixedCosts.toFixed(2)}</p>
+            <p><strong>Punto de equilibrio estimado (ingreso):</strong> $${peGeneral.toFixed(2)}</p>
+            <p><strong>Estado general:</strong> ${estadoGeneral}</p>
+          </div>
+        </div>`;
+      
+      document.getElementById("resumenGeneral").innerHTML = resumenHTML;
+    }
 
-  // Cálculo del punto de equilibrio general
-  let ingresoTotal = 0, contribucionTotal = 0;
-  resumen.forEach(p => {
-    ingresoTotal += p.precio * p.cantidad;
-    contribucionTotal += p.contribucion * p.cantidad;
-  });
-  const peGeneral = fixedCosts / (contribucionTotal / ingresoTotal);
-  const estadoGeneral = contribucionTotal > fixedCosts ? 'Ganancia' : (contribucionTotal === fixedCosts ? 'Equilibrio' : 'Pérdida');
-  resumenHTML += `<p><strong>Contribución Total:</strong> $${contribucionTotal.toFixed(2)}</p>`;
-  resumenHTML += `<p><strong>Ingreso Total:</strong> $${ingresoTotal.toFixed(2)}</p>`;
-  resumenHTML += `<p><strong>Punto de equilibrio estimado (ingreso):</strong> $${peGeneral.toFixed(2)}</p>`;
-  resumenHTML += `<p><strong>Estado general:</strong> ${estadoGeneral}</p>`;
-  document.getElementById("resumenGeneral").innerHTML = resumenHTML;
-}
+    // Inicialización
+    document.addEventListener('DOMContentLoaded', function() {
+      mostrarFase("fase1");
+      togglePriceMethod();
+    });
   </script>
 </body>
 </html>
