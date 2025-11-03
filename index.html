@@ -4,8 +4,8 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <meta name="author" content="Darío Hurtado Cuenca" />
-  <meta name="description" content="Simulador de Rentabilidad y Punto de Equilibrio para múltiples productos. Herramienta profesional desarrollada por Neodat." />
-  <title>Simulador de Rentabilidad - Neodat</title>
+  <meta name="description" content="Simulador profesional de rentabilidad y punto de equilibrio para múltiples productos, desarrollado por Neodat." />
+  <title>Simulador de Rentabilidad – Neodat</title>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet"/>
   <style>
     body {
@@ -17,7 +17,7 @@
     }
 
     header {
-      background: #222;
+      background: #000000;
       color: #fff;
       padding: 2rem 1rem;
       text-align: center;
@@ -51,41 +51,41 @@
 
     ul {
       list-style-type: none;
-      padding: 0;
+      padding-left: 0;
     }
 
     ul li::before {
-      content: "✔";
+      content: "✓";
       margin-right: 0.5rem;
-      color: #009688;
+      color: #2e7d32;
     }
 
     .image-container {
       text-align: center;
-      margin-top: 1rem;
+      margin-top: 1.5rem;
     }
 
     .image-container img {
       width: 90%;
-      max-width: 700px;
-      border-radius: 10px;
-      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+      max-width: 720px;
+      border-radius: 12px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+      margin-bottom: 2rem;
     }
 
     .btn-download {
       display: inline-block;
-      background: #009688;
+      background: #2e7d32;
       color: white;
       padding: 0.9rem 2rem;
       text-decoration: none;
       font-weight: bold;
       border-radius: 8px;
-      margin-top: 1.5rem;
       transition: background 0.3s;
     }
 
     .btn-download:hover {
-      background: #00796b;
+      background: #1b5e20;
     }
 
     footer {
@@ -98,41 +98,43 @@
   </style>
 </head>
 <body>
+
   <header>
     <h1>Simulador de Rentabilidad y Punto de Equilibrio</h1>
-    <p>Desarrollado por Neodat · Gestión financiera profesional para múltiples productos</p>
+    <p>Herramienta avanzada de análisis financiero para múltiples productos – by Neodat</p>
   </header>
 
   <main>
     <section>
-      <h2>¿Qué hace este simulador?</h2>
-      <p>Esta herramienta profesional en Excel + VBA permite calcular el punto de equilibrio y la rentabilidad de múltiples productos considerando diferentes estrategias de precio:</p>
+      <h2>¿Qué es este simulador?</h2>
+      <p>Es una hoja de cálculo con macros que permite calcular automáticamente el punto de equilibrio y la rentabilidad esperada para diferentes productos en tu negocio.</p>
       <ul>
-        <li>Fijación de precio por margen deseado</li>
-        <li>Fijación de precio por mercado</li>
-        <li>Precio manual</li>
-        <li>Costos fijos y variables</li>
-        <li>Cálculo por producto: PE unidades, PE valor, margen de contribución</li>
+        <li>Permite ingresar múltiples productos</li>
+        <li>Cálculo de precio por margen deseado o precio fijo</li>
+        <li>Costo variable y costo fijo</li>
+        <li>Cálculo automático del PE en unidades y en valor</li>
+        <li>Resultados exportables y visualmente amigables</li>
       </ul>
     </section>
 
     <section>
-      <h2>Vista del simulador</h2>
+      <h2>Capturas del Simulador</h2>
       <div class="image-container">
-        <img src="simulador_ingreso.png" alt="Formulario de ingreso del simulador" />
-        <img src="simulador_resultados.png" alt="Resultados del simulador por producto" style="margin-top: 1.5rem;" />
+        <img src="simulador_ingreso.png" alt="Formulario de ingreso del simulador">
+        <img src="simulador_resultados.png" alt="Resultados del simulador por producto">
       </div>
     </section>
 
     <section>
-      <h2>Descarga el archivo</h2>
-      <p>Incluye el archivo `.xlsm` con macros, formularios en dos idiomas y hoja de resultados automatizada.</p>
-      <a href="SimuladorNeodat.xlsm" class="btn-download" download>Descargar simulador</a>
+      <h2>Descarga</h2>
+      <p>Haz clic para descargar el archivo Excel con macros habilitadas:</p>
+      <a href="SimuladorNeodat.xlsm" class="btn-download" download>Descargar Simulador</a>
     </section>
   </main>
 
   <footer>
-    © 2025 Neodat · Desarrollado por Mgs. Darío Hurtado Cuenca · Todos los derechos reservados
+    © 2025 Neodat · Desarrollado por Mgs. Darío Hurtado Cuenca
   </footer>
+
 </body>
 </html>
