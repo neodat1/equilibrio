@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta name="author" content="Darío Hurtado Cuenca" />
+  <meta name="description" content="Simulador de Rentabilidad y Punto de Equilibrio para múltiples productos. Herramienta profesional desarrollada por Neodat." />
+  <title>Simulador de Rentabilidad - Neodat</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet"/>
+  <style>
+    body {
+      font-family: 'Inter', sans-serif;
+      margin: 0;
+      padding: 0;
+      background: #f9f9f9;
+      color: #333;
+    }
+
+    header {
+      background: #222;
+      color: #fff;
+      padding: 2rem 1rem;
+      text-align: center;
+    }
+
+    header h1 {
+      margin: 0;
+      font-size: 2rem;
+    }
+
+    header p {
+      font-size: 1rem;
+      margin-top: 0.5rem;
+      color: #ccc;
+    }
+
+    main {
+      max-width: 960px;
+      margin: 2rem auto;
+      padding: 0 1rem;
+    }
+
+    section {
+      margin-bottom: 2.5rem;
+    }
+
+    h2 {
+      color: #2a2a2a;
+      margin-bottom: 0.8rem;
+    }
+
+    ul {
+      list-style-type: none;
+      padding: 0;
+    }
+
+    ul li::before {
+      content: "✔";
+      margin-right: 0.5rem;
+      color: #009688;
+    }
+
+    .image-container {
+      text-align: center;
+      margin-top: 1rem;
+    }
+
+    .image-container img {
+      width: 90%;
+      max-width: 700px;
+      border-radius: 10px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    }
+
+    .btn-download {
+      display: inline-block;
+      background: #009688;
+      color: white;
+      padding: 0.9rem 2rem;
+      text-decoration: none;
+      font-weight: bold;
+      border-radius: 8px;
+      margin-top: 1.5rem;
+      transition: background 0.3s;
+    }
+
+    .btn-download:hover {
+      background: #00796b;
+    }
+
+    footer {
+      text-align: center;
+      padding: 2rem 1rem;
+      background: #eee;
+      font-size: 0.9rem;
+      color: #666;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Simulador de Rentabilidad y Punto de Equilibrio</h1>
+    <p>Desarrollado por Neodat · Gestión financiera profesional para múltiples productos</p>
+  </header>
+
+  <main>
+    <section>
+      <h2>¿Qué hace este simulador?</h2>
+      <p>Esta herramienta profesional en Excel + VBA permite calcular el punto de equilibrio y la rentabilidad de múltiples productos considerando diferentes estrategias de precio:</p>
+      <ul>
+        <li>Fijación de precio por margen deseado</li>
+        <li>Fijación de precio por mercado</li>
+        <li>Precio manual</li>
+        <li>Costos fijos y variables</li>
+        <li>Cálculo por producto: PE unidades, PE valor, margen de contribución</li>
+      </ul>
+    </section>
+
+    <section>
+      <h2>Vista del simulador</h2>
+      <div class="image-container">
+        <img src="simulador_ingreso.png" alt="Formulario de ingreso del simulador" />
+        <img src="simulador_resultados.png" alt="Resultados del simulador por producto" style="margin-top: 1.5rem;" />
+      </div>
+    </section>
+
+    <section>
+      <h2>Descarga el archivo</h2>
+      <p>Incluye el archivo `.xlsm` con macros, formularios en dos idiomas y hoja de resultados automatizada.</p>
+      <a href="SimuladorNeodat.xlsm" class="btn-download" download>Descargar simulador</a>
+    </section>
+  </main>
+
+  <footer>
+    © 2025 Neodat · Desarrollado por Mgs. Darío Hurtado Cuenca · Todos los derechos reservados
+  </footer>
+</body>
+</html>
