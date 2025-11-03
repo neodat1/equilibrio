@@ -101,7 +101,10 @@
       <label>Costo variable unitario:</label>
       <input type="number" id="unitCost">
       <button onclick="addProductToList()">Agregar</button>
-      <ul id="productList"></ul>
+      <table id="tablaProductos">
+  <thead><tr><th>Producto</th><th>Costo Unitario</th><th>Acciones</th></tr></thead>
+  <tbody id="productTableBody"></tbody>
+</table>
       <button onclick="goToFase3()">Siguiente</button>
     </section>
 
@@ -114,7 +117,9 @@
         <option value="manual">Manual</option>
         <option value="margen">Por margen</option>
       </select>
-      <div id="manualPriceGroup">
+<label>Cantidad estimada a vender:</label>
+<input type="number" id="estimatedQty" step="1">
+$1
         <label>Precio de venta unitario:</label>
         <input type="number" id="unitPrice" step="0.01">
       </div>
@@ -123,7 +128,9 @@
         <input type="number" id="desiredMargin" step="0.01">
       </div>
       <button onclick="calcularResultados()">Calcular</button>
-      <div id="resultado"></div>
+      <button onclick="agregarResumen()">Agregar al resumen general</button>
+<div id="resumenGeneral"></div>
+<div id="resultado"></div>
     </section>
   </div>
 
@@ -132,6 +139,7 @@
     let listaCostos = [];
     const products = [];
     let chart;
+const resumen = [];
 
     function agregarCostoFijo() {
       const concepto = document.getElementById("costoConcepto").value;
@@ -182,10 +190,13 @@
     }
 
     function renderTablaProductos() {
-      const list = document.getElementById("productList");
-      list.innerHTML = "";
-      products.forEach((p, i) => {
-        list.innerHTML += `<li>${p.name} ($${p.cost.toFixed(2)}) <button onclick='editarProducto(${i})'>Editar</button> <button onclick='eliminarProducto(${i})'>Eliminar</button></li>`;
+  const tbody = document.getElementById("productTableBody");
+  tbody.innerHTML = "";
+  products.forEach((p, i) => {
+    tbody.innerHTML += `<tr><td>${p.name}</td><td>$${p.cost.toFixed(2)}</td><td><button onclick='editarProducto(${i})'>Editar</button><button onclick='eliminarProducto(${i})'>Eliminar</button></td></tr>`;
+  });
+  actualizarSelectProducto();
+} ($${p.cost.toFixed(2)}) <button onclick='editarProducto(${i})'>Editar</button> <button onclick='eliminarProducto(${i})'>Eliminar</button></li>`;
       });
       actualizarSelectProducto();
     }
@@ -230,76 +241,104 @@
     }
 
     function calcularResultados() {
-      const selectedName = document.getElementById("selectedProduct").value;
-      const product = products.find(p => p.name === selectedName);
-      const method = document.getElementById("priceMethod").value;
-      let unitPrice = 0;
-      if (method === 'manual') {
-        unitPrice = parseFloat(document.getElementById("unitPrice").value);
-      } else {
-        const margin = parseFloat(document.getElementById("desiredMargin").value);
-        unitPrice = product.cost / (1 - margin / 100);
-      }
-      const contribution = unitPrice - product.cost;
-      const peUnits = fixedCosts / contribution;
-      const peValue = peUnits * unitPrice;
+  const selectedName = document.getElementById("selectedProduct").value;
+  const product = products.find(p => p.name === selectedName);
+  const method = document.getElementById("priceMethod").value;
+  let unitPrice = 0;
+  if (method === 'manual') {
+    unitPrice = parseFloat(document.getElementById("unitPrice").value);
+  } else {
+    const margin = parseFloat(document.getElementById("desiredMargin").value);
+    unitPrice = product.cost / (1 - margin / 100);
+  }
+  const contribution = unitPrice - product.cost;
+  const peUnits = fixedCosts / contribution;
+  const peValue = peUnits * unitPrice;
 
-      let status, colorClass;
-      if (peUnits === 0) { status = 'Equilibrio'; colorClass = 'yellow'; }
-      else if (peUnits > 0 && contribution > 0) { status = 'Ganancia'; colorClass = 'green'; }
-      else { status = 'Pérdida'; colorClass = 'red'; }
+  let status, colorClass;
+  if (peUnits === 0) { status = 'Equilibrio'; colorClass = 'yellow'; }
+  else if (peUnits > 0 && contribution > 0) { status = 'Ganancia'; colorClass = 'green'; }
+  else { status = 'Pérdida'; colorClass = 'red'; }
 
-      document.getElementById("resultado").innerHTML = `
-        <div class="summary ${colorClass}">
-          Precio Unitario: $${unitPrice.toFixed(2)}<br>
-          Margen de contribución: $${contribution.toFixed(2)}<br>
-          Punto de equilibrio (unidades): ${peUnits.toFixed(2)}<br>
-          Punto de equilibrio (valor): $${peValue.toFixed(2)}<br>
-          Estado: ${status}
-        </div>
-        <canvas id="chartCanvas"></canvas>
-      `;
+  document.getElementById("resultado").innerHTML = `
+    <div class="summary ${colorClass}">
+      Precio Unitario: $${unitPrice.toFixed(2)}<br>
+      Margen de contribución: $${contribution.toFixed(2)}<br>
+      Punto de equilibrio (unidades): ${peUnits.toFixed(2)}<br>
+      Punto de equilibrio (valor): $${peValue.toFixed(2)}<br>
+      Estado: ${status}
+    </div>
+    <canvas id="chartCanvas"></canvas>
+  `;
 
-      const ctx = document.getElementById("chartCanvas").getContext("2d");
-      const unidades = Array.from({length: 11}, (_, i) => i * Math.ceil(peUnits / 5));
-      const ingresos = unidades.map(u => u * unitPrice);
-      const costosTotales = unidades.map(u => fixedCosts + (product.cost * u));
+  const ctx = document.getElementById("chartCanvas").getContext("2d");
+  const unidades = Array.from({length: 11}, (_, i) => i * Math.ceil(peUnits / 5));
+  const ingresos = unidades.map(u => u * unitPrice);
+  const costosTotales = unidades.map(u => fixedCosts + (product.cost * u));
 
-      if (chart) chart.destroy();
-      chart = new Chart(ctx, {
-        type: 'line',
-        data: {
-          labels: unidades,
-          datasets: [
-            { label: 'Ingresos Totales', data: ingresos, borderColor: '#1a1f4f', fill: false },
-            { label: 'Costos Totales', data: costosTotales, borderColor: '#8c1c13', fill: false }
-          ]
+  if (chart) chart.destroy();
+  chart = new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels: unidades,
+      datasets: [
+        { label: 'Ingresos Totales', data: ingresos, borderColor: '#1a1f4f', fill: false },
+        { label: 'Costos Totales', data: costosTotales, borderColor: '#8c1c13', fill: false }
+      ]
+    },
+    options: {
+      responsive: true,
+      plugins: {
+        title: {
+          display: true,
+          text: 'Ingreso vs. Costo Total'
+        }
+      },
+      scales: {
+        x: {
+          title: {
+            display: true,
+            text: 'Unidades Vendidas'
+          }
         },
-        options: {
-          responsive: true,
-          plugins: {
-            title: {
-              display: true,
-              text: 'Ingreso vs. Costo Total'
-            }
-          },
-          scales: {
-            x: {
-              title: {
-                display: true,
-                text: 'Unidades Vendidas'
-              }
-            },
-            y: {
-              title: {
-                display: true,
-                text: 'Valor ($)'
-              }
-            }
+        y: {
+          title: {
+            display: true,
+            text: 'Valor ($)'
           }
         }
-      });
+      }
     }
+  });
+
+  const estimatedQty = parseFloat(document.getElementById("estimatedQty").value);
+  if (!isNaN(estimatedQty)) {
+    resumen.push({ producto: product.name, precio: unitPrice, contribucion: contribution, cantidad: estimatedQty });
+  }
+}
+
+function agregarResumen() {
+  if (resumen.length === 0) return;
+  let resumenHTML = `<h3>Resumen General</h3><table><thead><tr><th>Producto</th><th>Precio Unitario</th><th>Margen de Contribución</th></tr></thead><tbody>`;
+  resumen.forEach(p => {
+    resumenHTML += `<tr><td>${p.producto}</td><td>$${p.precio.toFixed(2)}</td><td>$${p.contribucion.toFixed(2)}</td></tr>`;
+  });
+  resumenHTML += '</tbody></table>';
+
+  // Cálculo del punto de equilibrio general
+  let ingresoTotal = 0, contribucionTotal = 0;
+  resumen.forEach(p => {
+    ingresoTotal += p.precio * p.cantidad;
+    contribucionTotal += p.contribucion * p.cantidad;
+  });
+  const peGeneral = fixedCosts / (contribucionTotal / ingresoTotal);
+  const estadoGeneral = contribucionTotal > fixedCosts ? 'Ganancia' : (contribucionTotal === fixedCosts ? 'Equilibrio' : 'Pérdida');
+  resumenHTML += `<p><strong>Contribución Total:</strong> $${contribucionTotal.toFixed(2)}</p>`;
+  resumenHTML += `<p><strong>Ingreso Total:</strong> $${ingresoTotal.toFixed(2)}</p>`;
+  resumenHTML += `<p><strong>Punto de equilibrio estimado (ingreso):</strong> $${peGeneral.toFixed(2)}</p>`;
+  resumenHTML += `<p><strong>Estado general:</strong> ${estadoGeneral}</p>`;
+  document.getElementById("resumenGeneral").innerHTML = resumenHTML;
+}
   </script>
 </body>
 </html>
