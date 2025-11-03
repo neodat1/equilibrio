@@ -847,6 +847,20 @@
                             </div>
                         </div>
                         
+                        <div class="form-group">
+                            <label class="form-label">
+                                <i class="fas fa-percentage"></i>
+                                Calcular Precio por Margen de Utilidad
+                            </label>
+                            <div style="display: flex; gap: 10px;">
+                                <input type="number" class="form-control" id="margenUtilidad" placeholder="% Margen deseado" min="0" max="100" step="0.1">
+                                <button class="btn btn-outline" id="calcularPrecio">
+                                    <i class="fas fa-calculator"></i>
+                                    Calcular Precio
+                                </button>
+                            </div>
+                        </div>
+                        
                         <button class="btn btn-primary" id="agregarProducto">
                             <i class="fas fa-plus"></i>
                             Agregar Producto
@@ -1073,6 +1087,9 @@
             // Agregar producto
             document.getElementById('agregarProducto').addEventListener('click', agregarProducto);
             
+            // Calcular precio por margen
+            document.getElementById('calcularPrecio').addEventListener('click', calcularPrecioPorMargen);
+            
             // Navegación
             document.getElementById('siguienteProductos').addEventListener('click', () => cambiarTab('productos'));
             document.getElementById('volverCostos').addEventListener('click', () => cambiarTab('costos'));
@@ -1153,6 +1170,22 @@
             actualizarResumen();
         }
         
+        function calcularPrecioPorMargen() {
+            const costo = parseFloat(document.getElementById('productoCosto').value);
+            const margen = parseFloat(document.getElementById('margenUtilidad').value);
+            
+            if (isNaN(costo) || costo <= 0 || isNaN(margen) || margen <= 0) {
+                alert('Por favor ingrese un costo y margen válidos');
+                return;
+            }
+            
+            // Calcular precio basado en margen de utilidad
+            // Precio = Costo / (1 - (Margen/100))
+            const precio = costo / (1 - (margen / 100));
+            
+            document.getElementById('productoPrecio').value = precio.toFixed(2);
+        }
+        
         function agregarProducto() {
             const nombre = document.getElementById('productoNombre').value.trim();
             const costo = parseFloat(document.getElementById('productoCosto').value);
@@ -1182,6 +1215,7 @@
             document.getElementById('productoNombre').value = '';
             document.getElementById('productoCosto').value = '';
             document.getElementById('productoPrecio').value = '';
+            document.getElementById('margenUtilidad').value = '';
         }
         
         function actualizarTablaProductos() {
@@ -1373,7 +1407,6 @@
             // Preparar datos para el gráfico de reporte
             const labels = productos.map(p => p.nombre);
             const ingresos = productos.map(p => p.ingresosEquilibrio || 0);
-            const costos = productos.map(p => p.costosFijosAsignados || 0);
             const colores = ['#3b82f6', '#6366f1', '#8b5cf6', '#a855f7', '#c084fc'];
             
             reportChart = new Chart(ctx, {
@@ -1450,21 +1483,98 @@
         }
         
         function exportarAPdf() {
-            alert('Exportando a PDF...');
-            // En una implementación real, usaríamos jsPDF para generar el PDF
-            // const { jsPDF } = window.jspdf;
-            // const doc = new jsPDF();
-            // doc.text('Reporte de Punto de Equilibrio', 20, 20);
-            // doc.save('reporte-punto-equilibrio.pdf');
+            // Usar jsPDF para generar PDF
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF();
+            
+            // Título
+            doc.setFontSize(20);
+            doc.text('Reporte de Punto de Equilibrio', 20, 30);
+            
+            // Fecha
+            doc.setFontSize(12);
+            doc.text(`Generado el: ${new Date().toLocaleDateString()}`, 20, 45);
+            
+            // Resumen
+            doc.setFontSize(16);
+            doc.text('Resumen Ejecutivo', 20, 65);
+            
+            doc.setFontSize(12);
+            doc.text(`Costos Fijos Totales: $${costosFijos.reduce((sum, c) => sum + c.monto, 0).toLocaleString()}`, 20, 80);
+            doc.text(`Total de Productos: ${productos.length}`, 20, 90);
+            
+            let unidadesTotales = 0;
+            let ingresosTotales = 0;
+            
+            if (productos.length > 0 && productos[0].unidadesEquilibrio) {
+                unidadesTotales = productos.reduce((sum, p) => sum + p.unidadesEquilibrio, 0);
+                ingresosTotales = productos.reduce((sum, p) => sum + p.ingresosEquilibrio, 0);
+            }
+            
+            doc.text(`Unidades Totales para Equilibrio: ${unidadesTotales.toLocaleString()}`, 20, 100);
+            doc.text(`Ingresos Totales en Equilibrio: $${ingresosTotales.toLocaleString()}`, 20, 110);
+            
+            // Tabla de productos
+            doc.setFontSize(16);
+            doc.text('Puntos de Equilibrio por Producto', 20, 130);
+            
+            const tableData = productos.map(p => [
+                p.nombre,
+                `$${p.costosFijosAsignados ? p.costosFijosAsignados.toFixed(2) : '0.00'}`,
+                `$${p.precio.toFixed(2)}`,
+                `$${p.margenUnitario.toFixed(2)}`,
+                p.unidadesEquilibrio ? p.unidadesEquilibrio.toLocaleString() : '0',
+                `$${p.ingresosEquilibrio ? p.ingresosEquilibrio.toLocaleString() : '0'}`
+            ]);
+            
+            doc.autoTable({
+                startY: 140,
+                head: [['Producto', 'Costos Fijos', 'Precio', 'Margen', 'Unidades', 'Ingresos']],
+                body: tableData,
+                theme: 'grid',
+                headStyles: { fillColor: [37, 99, 235] }
+            });
+            
+            // Guardar PDF
+            doc.save('reporte-punto-equilibrio.pdf');
         }
         
         function exportarAExcel() {
-            alert('Exportando a Excel...');
-            // En una implementación real, usaríamos SheetJS para generar el Excel
-            // const wb = XLSX.utils.book_new();
-            // const ws = XLSX.utils.table_to_sheet(document.querySelector('table'));
-            // XLSX.utils.book_append_sheet(wb, ws, 'Punto de Equilibrio');
-            // XLSX.writeFile(wb, 'reporte-punto-equilibrio.xlsx');
+            // Crear libro de trabajo
+            const wb = XLSX.utils.book_new();
+            
+            // Crear hoja de resumen
+            const summaryData = [
+                ['REPORTE DE PUNTO DE EQUILIBRIO'],
+                ['Generado el:', new Date().toLocaleDateString()],
+                [],
+                ['RESUMEN EJECUTIVO'],
+                ['Costos Fijos Totales:', `$${costosFijos.reduce((sum, c) => sum + c.monto, 0).toLocaleString()}`],
+                ['Total de Productos:', productos.length],
+                ['Unidades Totales para Equilibrio:', productos.reduce((sum, p) => sum + (p.unidadesEquilibrio || 0), 0)],
+                ['Ingresos Totales en Equilibrio:', `$${productos.reduce((sum, p) => sum + (p.ingresosEquilibrio || 0), 0).toLocaleString()}`],
+                [],
+                ['PUNTOS DE EQUILIBRIO POR PRODUCTO'],
+                ['Producto', 'Costos Fijos Asignados', 'Precio', 'Margen Unitario', 'Unidades a Vender', 'Ingresos de Equilibrio']
+            ];
+            
+            // Agregar datos de productos
+            productos.forEach(p => {
+                summaryData.push([
+                    p.nombre,
+                    p.costosFijosAsignados ? p.costosFijosAsignados : 0,
+                    p.precio,
+                    p.margenUnitario,
+                    p.unidadesEquilibrio ? p.unidadesEquilibrio : 0,
+                    p.ingresosEquilibrio ? p.ingresosEquilibrio : 0
+                ]);
+            });
+            
+            const ws = XLSX.utils.aoa_to_sheet(summaryData);
+            XLSX.utils.book_append_sheet(wb, ws, 'Punto de Equilibrio');
+            
+            // Guardar archivo
+            XLSX.writeFile(wb, 'reporte-punto-equilibrio.xlsx');
         }
     </script>
 </body>
