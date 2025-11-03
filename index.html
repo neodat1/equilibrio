@@ -255,6 +255,19 @@
       color: white;
     }
     
+    .estimation-table {
+      width: 100%;
+      margin-top: 20px;
+    }
+    
+    .estimation-table th {
+      background-color: #6c757d;
+    }
+    
+    .estimation-table td {
+      text-align: center;
+    }
+    
     @media (max-width: 768px) {
       .container {
         padding: 10px;
@@ -371,12 +384,13 @@
     </section>
 
     <section id="fase3">
-      <h2>Fase 3: Selección de producto y método de precio</h2>
+      <h2>Fase 3: Configuración de precios y estimación</h2>
       
       <div class="card">
+        <h3>Configuración de Precios</h3>
         <div class="form-group">
           <label for="selectedProduct">Producto:</label>
-          <select id="selectedProduct"></select>
+          <select id="selectedProduct" onchange="cargarDatosProducto()"></select>
         </div>
         
         <div class="form-group">
@@ -387,33 +401,41 @@
           </select>
         </div>
         
-        <div class="form-group">
-          <label for="estimatedQty">Cantidad estimada a vender:</label>
-          <input type="number" id="estimatedQty" step="1" min="0" placeholder="0">
-        </div>
-        
         <div id="manualPriceGroup" class="price-method-group">
           <div class="form-group">
             <label for="unitPrice">Precio de venta unitario:</label>
-            <input type="number" id="unitPrice" step="0.01" min="0" placeholder="0.00">
+            <input type="number" id="unitPrice" step="0.01" min="0" placeholder="0.00" onchange="calcularMargenDesdePrecio()">
           </div>
         </div>
         
         <div id="margenGroup" class="price-method-group" style="display: none;">
           <div class="form-group">
             <label for="desiredMargin">Margen deseado (%):</label>
-            <input type="number" id="desiredMargin" step="0.01" min="0" max="100" placeholder="0.00">
+            <input type="number" id="desiredMargin" step="0.01" min="0" max="100" placeholder="0.00" onchange="calcularPrecioDesdeMargen()">
           </div>
         </div>
         
+        <div class="form-group">
+          <label for="estimatedQty">Cantidad estimada a vender:</label>
+          <input type="number" id="estimatedQty" step="1" min="0" placeholder="0" onchange="actualizarResumenProducto()">
+        </div>
+        
         <div class="button-group">
-          <button onclick="calcularResultados()">Calcular</button>
-          <button onclick="agregarResumen()">Agregar al resumen general</button>
+          <button onclick="agregarProductoResumen()">Agregar al Resumen</button>
+          <button onclick="calcularEstimacionGeneral()">Calcular Estimación General</button>
         </div>
       </div>
       
-      <div id="resultado"></div>
-      <div id="resumenGeneral"></div>
+      <div id="resultadoProducto" class="card" style="display: none;">
+        <h3>Resultados del Producto</h3>
+        <div id="resumenProducto"></div>
+      </div>
+      
+      <div id="resumenGeneral" class="card" style="display: none;">
+        <h3>Resumen General</h3>
+        <div id="tablaResumen"></div>
+        <div id="estimacionGeneral"></div>
+      </div>
     </section>
   </div>
 
@@ -423,8 +445,7 @@
     let listaCostos = [];
     const products = [];
     let chart;
-    const resumen = [];
-    let currentFase = 1;
+    const resumenProductos = [];
 
     // Funciones para manejar las fases
     function mostrarFase(id) {
@@ -438,16 +459,14 @@
       
       if (id === "fase1") {
         document.getElementById("step1").classList.add("active");
-        currentFase = 1;
       } else if (id === "fase2") {
         document.getElementById("step1").classList.add("completed");
         document.getElementById("step2").classList.add("active");
-        currentFase = 2;
       } else if (id === "fase3") {
         document.getElementById("step1").classList.add("completed");
         document.getElementById("step2").classList.add("completed");
         document.getElementById("step3").classList.add("active");
-        currentFase = 3;
+        actualizarSelectProducto();
       }
     }
 
@@ -601,45 +620,73 @@
       togglePriceMethod();
     }
 
-    // Funciones para cálculos
+    // Funciones para cálculos de precios
     function togglePriceMethod() {
       const method = document.getElementById("priceMethod").value;
       document.getElementById("manualPriceGroup").style.display = method === 'manual' ? 'block' : 'none';
       document.getElementById("margenGroup").style.display = method === 'margen' ? 'block' : 'none';
+      
+      // Limpiar campos
+      document.getElementById("unitPrice").value = "";
+      document.getElementById("desiredMargin").value = "";
+      document.getElementById("resumenProducto").innerHTML = "";
+      document.getElementById("resultadoProducto").style.display = "none";
     }
 
-    function calcularResultados() {
+    function cargarDatosProducto() {
       const selectedName = document.getElementById("selectedProduct").value;
       const product = products.find(p => p.name === selectedName);
       
-      if (!product) {
-        alert("Por favor, seleccione un producto válido.");
-        return;
+      if (product) {
+        // Limpiar campos
+        document.getElementById("unitPrice").value = "";
+        document.getElementById("desiredMargin").value = "";
+        document.getElementById("estimatedQty").value = "";
+        document.getElementById("resumenProducto").innerHTML = "";
+        document.getElementById("resultadoProducto").style.display = "none";
       }
+    }
+
+    function calcularPrecioDesdeMargen() {
+      const selectedName = document.getElementById("selectedProduct").value;
+      const product = products.find(p => p.name === selectedName);
+      const margin = parseFloat(document.getElementById("desiredMargin").value);
       
-      const method = document.getElementById("priceMethod").value;
-      let unitPrice = 0;
-      
-      if (method === 'manual') {
-        unitPrice = parseFloat(document.getElementById("unitPrice").value);
-        if (isNaN(unitPrice) || unitPrice <= 0) {
-          alert("Por favor, ingrese un precio de venta válido mayor a cero.");
-          return;
-        }
-      } else {
-        const margin = parseFloat(document.getElementById("desiredMargin").value);
-        if (isNaN(margin) || margin <= 0 || margin >= 100) {
-          alert("Por favor, ingrese un margen válido entre 0 y 100%.");
-          return;
-        }
-        unitPrice = product.cost / (1 - margin / 100);
+      if (product && !isNaN(margin) && margin >= 0 && margin < 100) {
+        const unitPrice = product.cost / (1 - margin / 100);
         document.getElementById("unitPrice").value = unitPrice.toFixed(2);
+        actualizarResumenProducto();
+      }
+    }
+
+    function calcularMargenDesdePrecio() {
+      const selectedName = document.getElementById("selectedProduct").value;
+      const product = products.find(p => p.name === selectedName);
+      const unitPrice = parseFloat(document.getElementById("unitPrice").value);
+      
+      if (product && !isNaN(unitPrice) && unitPrice > 0) {
+        const margin = ((unitPrice - product.cost) / unitPrice) * 100;
+        document.getElementById("desiredMargin").value = margin.toFixed(2);
+        actualizarResumenProducto();
+      }
+    }
+
+    function actualizarResumenProducto() {
+      const selectedName = document.getElementById("selectedProduct").value;
+      const product = products.find(p => p.name === selectedName);
+      const unitPrice = parseFloat(document.getElementById("unitPrice").value);
+      const estimatedQty = parseFloat(document.getElementById("estimatedQty").value);
+      
+      if (!product || isNaN(unitPrice) || unitPrice <= 0) {
+        return;
       }
       
       const contribution = unitPrice - product.cost;
       const peUnits = fixedCosts / contribution;
       const peValue = peUnits * unitPrice;
-
+      const totalRevenue = unitPrice * estimatedQty;
+      const totalContribution = contribution * estimatedQty;
+      
       let status, colorClass;
       if (peUnits === 0) { 
         status = 'Equilibrio'; 
@@ -651,91 +698,38 @@
         status = 'Pérdida'; 
         colorClass = 'red'; 
       }
-
-      document.getElementById("resultado").innerHTML = `
-        <div class="card">
-          <h3>Resultados del Cálculo</h3>
-          <div class="summary ${colorClass}">
-            <p><strong>Producto:</strong> ${product.name}</p>
-            <p><strong>Precio Unitario:</strong> $${unitPrice.toFixed(2)}</p>
-            <p><strong>Margen de contribución:</strong> $${contribution.toFixed(2)}</p>
-            <p><strong>Punto de equilibrio (unidades):</strong> ${Math.ceil(peUnits)}</p>
-            <p><strong>Punto de equilibrio (valor):</strong> $${peValue.toFixed(2)}</p>
-            <p><strong>Estado:</strong> ${status}</p>
-          </div>
-          <canvas id="chartCanvas"></canvas>
+      
+      document.getElementById("resumenProducto").innerHTML = `
+        <div class="summary ${colorClass}">
+          <p><strong>Producto:</strong> ${product.name}</p>
+          <p><strong>Precio Unitario:</strong> $${unitPrice.toFixed(2)}</p>
+          <p><strong>Costo Unitario:</strong> $${product.cost.toFixed(2)}</p>
+          <p><strong>Margen de Contribución:</strong> $${contribution.toFixed(2)}</p>
+          <p><strong>Punto de Equilibrio (unidades):</strong> ${Math.ceil(peUnits)}</p>
+          <p><strong>Punto de Equilibrio (valor):</strong> $${peValue.toFixed(2)}</p>
+          <p><strong>Cantidad Estimada:</strong> ${isNaN(estimatedQty) ? 0 : estimatedQty}</p>
+          <p><strong>Ingreso Total Estimado:</strong> $${isNaN(totalRevenue) ? '0.00' : totalRevenue.toFixed(2)}</p>
+          <p><strong>Contribución Total Estimada:</strong> $${isNaN(totalContribution) ? '0.00' : totalContribution.toFixed(2)}</p>
+          <p><strong>Estado:</strong> ${status}</p>
         </div>
       `;
-
-      // Generar gráfico
-      const ctx = document.getElementById("chartCanvas").getContext("2d");
-      const maxUnits = Math.max(peUnits * 2, 100); // Mostrar hasta el doble del punto de equilibrio o 100 unidades
-      const unidades = Array.from({length: 11}, (_, i) => Math.ceil(i * maxUnits / 10));
-      const ingresos = unidades.map(u => u * unitPrice);
-      const costosTotales = unidades.map(u => fixedCosts + (product.cost * u));
-
-      if (chart) chart.destroy();
-      chart = new Chart(ctx, {
-        type: 'line',
-        data: {
-          labels: unidades,
-          datasets: [
-            { 
-              label: 'Ingresos Totales', 
-              data: ingresos, 
-              borderColor: '#1a1f4f', 
-              backgroundColor: 'rgba(26, 31, 79, 0.1)',
-              fill: true,
-              tension: 0.4
-            },
-            { 
-              label: 'Costos Totales', 
-              data: costosTotales, 
-              borderColor: '#8c1c13', 
-              backgroundColor: 'rgba(140, 28, 19, 0.1)',
-              fill: true,
-              tension: 0.4
-            }
-          ]
-        },
-        options: {
-          responsive: true,
-          plugins: {
-            title: {
-              display: true,
-              text: 'Análisis de Punto de Equilibrio'
-            },
-            tooltip: {
-              mode: 'index',
-              intersect: false
-            }
-          },
-          scales: {
-            x: {
-              title: {
-                display: true,
-                text: 'Unidades Vendidas'
-              }
-            },
-            y: {
-              title: {
-                display: true,
-                text: 'Valor ($)'
-              },
-              beginAtZero: true
-            }
-          }
-        }
-      });
+      
+      document.getElementById("resultadoProducto").style.display = "block";
     }
 
-    function agregarResumen() {
+    function agregarProductoResumen() {
       const selectedName = document.getElementById("selectedProduct").value;
       const product = products.find(p => p.name === selectedName);
+      const unitPrice = parseFloat(document.getElementById("unitPrice").value);
       const estimatedQty = parseFloat(document.getElementById("estimatedQty").value);
       
       if (!product) {
         alert("Por favor, seleccione un producto válido.");
+        return;
+      }
+      
+      if (isNaN(unitPrice) || unitPrice <= 0) {
+        alert("Por favor, calcule primero el precio unitario antes de agregar al resumen.");
         return;
       }
       
@@ -744,106 +738,125 @@
         return;
       }
       
-      const unitPrice = parseFloat(document.getElementById("unitPrice").value);
-      if (isNaN(unitPrice) || unitPrice <= 0) {
-        alert("Por favor, calcule primero el precio unitario antes de agregar al resumen.");
-        return;
-      }
-      
       const contribution = unitPrice - product.cost;
+      const totalRevenue = unitPrice * estimatedQty;
+      const totalContribution = contribution * estimatedQty;
+      const peUnits = fixedCosts / contribution;
       
       // Verificar si el producto ya está en el resumen
-      const existingIndex = resumen.findIndex(p => p.producto === product.name);
+      const existingIndex = resumenProductos.findIndex(p => p.producto === product.name);
       if (existingIndex !== -1) {
-        resumen[existingIndex] = { 
+        resumenProductos[existingIndex] = { 
           producto: product.name, 
+          costo: product.cost,
           precio: unitPrice, 
           contribucion: contribution, 
-          cantidad: estimatedQty 
+          cantidad: estimatedQty,
+          ingreso: totalRevenue,
+          contribucionTotal: totalContribution,
+          puntoEquilibrio: peUnits
         };
       } else {
-        resumen.push({ 
+        resumenProductos.push({ 
           producto: product.name, 
+          costo: product.cost,
           precio: unitPrice, 
           contribucion: contribution, 
-          cantidad: estimatedQty 
+          cantidad: estimatedQty,
+          ingreso: totalRevenue,
+          contribucionTotal: totalContribution,
+          puntoEquilibrio: peUnits
         });
       }
       
-      renderResumenGeneral();
+      renderTablaResumen();
+      document.getElementById("resumenGeneral").style.display = "block";
     }
 
-    function renderResumenGeneral() {
-      if (resumen.length === 0) {
-        document.getElementById("resumenGeneral").innerHTML = "";
+    function renderTablaResumen() {
+      if (resumenProductos.length === 0) {
+        document.getElementById("tablaResumen").innerHTML = "";
         return;
       }
       
-      let resumenHTML = `
-        <div class="card">
-          <h3>Resumen General</h3>
-          <table>
-            <thead>
-              <tr>
-                <th>Producto</th>
-                <th>Precio Unitario</th>
-                <th>Margen de Contribución</th>
-                <th>Cantidad Estimada</th>
-                <th>Contribución Total</th>
-              </tr>
-            </thead>
-            <tbody>`;
+      let tablaHTML = `
+        <table class="estimation-table">
+          <thead>
+            <tr>
+              <th>Producto</th>
+              <th>Costo Unitario</th>
+              <th>Precio Unitario</th>
+              <th>Margen Contrib.</th>
+              <th>Cantidad Estimada</th>
+              <th>Ingreso Total</th>
+              <th>Contribución Total</th>
+              <th>Pto. Equilibrio (unid.)</th>
+            </tr>
+          </thead>
+          <tbody>`;
       
-      let ingresoTotal = 0;
-      let contribucionTotal = 0;
-      
-      resumen.forEach(p => {
-        const contribucionProducto = p.contribucion * p.cantidad;
-        const ingresoProducto = p.precio * p.cantidad;
-        
-        resumenHTML += `
+      resumenProductos.forEach(p => {
+        tablaHTML += `
           <tr>
             <td>${p.producto}</td>
+            <td>$${p.costo.toFixed(2)}</td>
             <td>$${p.precio.toFixed(2)}</td>
             <td>$${p.contribucion.toFixed(2)}</td>
             <td>${p.cantidad}</td>
-            <td>$${contribucionProducto.toFixed(2)}</td>
+            <td>$${p.ingreso.toFixed(2)}</td>
+            <td>$${p.contribucionTotal.toFixed(2)}</td>
+            <td>${Math.ceil(p.puntoEquilibrio)}</td>
           </tr>`;
-        
-        ingresoTotal += ingresoProducto;
-        contribucionTotal += contribucionProducto;
       });
       
-      resumenHTML += `
-            </tbody>
-            <tfoot>
-              <tr>
-                <th colspan="4">Total</th>
-                <th>$${contribucionTotal.toFixed(2)}</th>
-              </tr>
-            </tfoot>
-          </table>`;
+      tablaHTML += `</tbody></table>`;
+      document.getElementById("tablaResumen").innerHTML = tablaHTML;
+    }
+
+    function calcularEstimacionGeneral() {
+      if (resumenProductos.length === 0) {
+        alert("Por favor, agregue al menos un producto al resumen antes de calcular la estimación general.");
+        return;
+      }
+      
+      let ingresoTotal = 0;
+      let contribucionTotal = 0;
+      let costoTotal = 0;
+      
+      resumenProductos.forEach(p => {
+        ingresoTotal += p.ingreso;
+        contribucionTotal += p.contribucionTotal;
+        costoTotal += p.costo * p.cantidad;
+      });
       
       // Cálculo del punto de equilibrio general
       const peGeneral = fixedCosts / (contribucionTotal / ingresoTotal);
-      const estadoGeneral = contribucionTotal > fixedCosts ? 'Ganancia' : 
-                           (contribucionTotal === fixedCosts ? 'Equilibrio' : 'Pérdida');
+      const utilidad = contribucionTotal - fixedCosts;
       
-      let estadoClass = 'yellow';
-      if (estadoGeneral === 'Ganancia') estadoClass = 'green';
-      else if (estadoGeneral === 'Pérdida') estadoClass = 'red';
+      let estadoGeneral, estadoClass;
+      if (utilidad > 0) {
+        estadoGeneral = 'Ganancia';
+        estadoClass = 'green';
+      } else if (utilidad === 0) {
+        estadoGeneral = 'Equilibrio';
+        estadoClass = 'yellow';
+      } else {
+        estadoGeneral = 'Pérdida';
+        estadoClass = 'red';
+      }
       
-      resumenHTML += `
-          <div class="summary ${estadoClass}">
-            <p><strong>Contribución Total:</strong> $${contribucionTotal.toFixed(2)}</p>
-            <p><strong>Ingreso Total:</strong> $${ingresoTotal.toFixed(2)}</p>
-            <p><strong>Costos Fijos Totales:</strong> $${fixedCosts.toFixed(2)}</p>
-            <p><strong>Punto de equilibrio estimado (ingreso):</strong> $${peGeneral.toFixed(2)}</p>
-            <p><strong>Estado general:</strong> ${estadoGeneral}</p>
-          </div>
-        </div>`;
-      
-      document.getElementById("resumenGeneral").innerHTML = resumenHTML;
+      document.getElementById("estimacionGeneral").innerHTML = `
+        <div class="summary ${estadoClass}">
+          <h4>Estimación General del Negocio</h4>
+          <p><strong>Costos Fijos Totales:</strong> $${fixedCosts.toFixed(2)}</p>
+          <p><strong>Ingreso Total Estimado:</strong> $${ingresoTotal.toFixed(2)}</p>
+          <p><strong>Costos Variables Totales:</strong> $${costoTotal.toFixed(2)}</p>
+          <p><strong>Contribución Total:</strong> $${contribucionTotal.toFixed(2)}</p>
+          <p><strong>Utilidad Estimada:</strong> $${utilidad.toFixed(2)}</p>
+          <p><strong>Punto de Equilibrio General (ingreso):</strong> $${peGeneral.toFixed(2)}</p>
+          <p><strong>Estado General:</strong> ${estadoGeneral}</p>
+        </div>
+      `;
     }
 
     // Inicialización
