@@ -1907,7 +1907,7 @@
                         x: {
                             title: {
                                 display: true,
-                                text: 'Nivel de Ventas ($)'
+                                text: 'Nivel de Ventas (u)'
                             }
                         },
                         y: {
@@ -2531,29 +2531,24 @@
         
         function generarPlanAccion(margenSeguridad, unidadesTotales, ingresosTotales) {
             let plan = "PLAN DE ACCIÓN INMEDIATO (PRÓXIMOS 30 DÍAS):\n\n";
-            
             if (margenSeguridad < 15) {
                 plan += "1. REVISIÓN DE COSTOS FIJOS (Urgente)\n";
                 plan += "   • Identificar al menos 3 partidas reducibles\n";
                 plan += "   • Negociar con proveedores servicios recurrentes\n";
                 plan += "   • Fecha límite: 15 días\n\n";
             }
-            
             plan += "2. OPTIMIZACIÓN DE PRECIOS\n";
             plan += "   • Análisis competitivo de precios por producto\n";
             plan += "   • Revisión de elasticidad precio-demanda\n";
             plan += "   • Fecha límite: 20 días\n\n";
-            
             plan += "3. PLAN COMERCIAL\n";
             plan += "   • Establecer meta mínima: " + Math.ceil(unidadesTotales * 1.1) + " unidades/mes\n";
             plan += "   • Desarrollar incentivos por margen de contribución\n";
             plan += "   • Fecha límite: 25 días\n\n";
-            
             plan += "4. MONITOREO Y CONTROL\n";
             plan += "   • Implementar dashboard de métricas clave\n";
             plan += "   • Reuniones semanales de seguimiento\n";
             plan += "   • Sistema de alertas tempranas\n\n";
-            
             plan += "OBJETIVO A 90 DÍAS: Alcanzar margen de seguridad del " + Math.max(20, margenSeguridad + 5).toFixed(0) + "%";
             
             return plan;
