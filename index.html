@@ -11,24 +11,21 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         :root {
-           :root {
-              --primary: #003f5c;        /* Azul petróleo oscuro */
-              --primary-dark: #002b40;   /* Casi negro azulado */
-              --primary-light: #2f6690;  /* Azul acero elegante */
-              --secondary: #b8b8b8;      /* Gris aluminio */
-              --accent: #d4af37;         /* Dorado clásico (lujo sin saturación) */
-              --danger: #8b0000;         /* Rojo borgoña oscuro */
-              --warning: #c47f00;        /* Oro viejo / ámbar sobrio */
-              --success: #006d5b;        /* Verde petróleo oscuro */
-              --dark: #121212;           /* Negro carbón */
-              --light: #f2f2f2;          /* Blanco ceniza */
-              --gray: #6e6e6e;           /* Gris medio neutro */
-              --gray-light: #dcdcdc;     /* Gris claro perla */
-              --shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
-              --radius: 8px;
-              --transition: all 0.25s ease;
-}
-
+            --primary: #2563eb;
+            --primary-dark: #1d4ed8;
+            --primary-light: #3b82f6;
+            --secondary: #7c3aed;
+            --accent: #06d6a0;
+            --danger: #ef4444;
+            --warning: #f59e0b;
+            --success: #10b981;
+            --dark: #1e293b;
+            --light: #f8fafc;
+            --gray: #64748b;
+            --gray-light: #e2e8f0;
+            --shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+            --radius: 12px;
+            --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
         }
         
         * {
@@ -1548,7 +1545,6 @@
             }
         }
         
-        // ... resto de las funciones (agregarCosto, agregarProducto, calcularPuntosEquilibrio, etc.)
         function agregarCosto() {
             const concepto = document.getElementById('costoConcepto').value.trim();
             const monto = parseFloat(document.getElementById('costoMonto').value);
@@ -2207,22 +2203,39 @@
             const { jsPDF } = window.jspdf;
             const doc = new jsPDF();
             
-            // Título
+            // Configuración inicial
+            const pageWidth = doc.internal.pageSize.getWidth();
+            let yPosition = 30;
+            
+            // Título principal
             doc.setFontSize(20);
-            doc.text('Reporte de Punto de Equilibrio', 20, 30);
+            doc.setFont(undefined, 'bold');
+            doc.text('ANÁLISIS DE PUNTO DE EQUILIBRIO', pageWidth / 2, yPosition, { align: 'center' });
+            yPosition += 15;
             
-            // Fecha
+            // Fecha y información de la empresa
             doc.setFontSize(12);
-            doc.text(`Generado el: ${new Date().toLocaleDateString()}`, 20, 45);
+            doc.setFont(undefined, 'normal');
+            doc.text(`Generado el: ${new Date().toLocaleDateString('es-ES', { 
+                year: 'numeric', 
+                month: 'long', 
+                day: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit'
+            })}`, 20, yPosition);
+            yPosition += 20;
             
-            // Resumen
+            // Resumen Ejecutivo
             doc.setFontSize(16);
-            doc.text('Resumen Ejecutivo', 20, 65);
+            doc.setFont(undefined, 'bold');
+            doc.text('RESUMEN EJECUTIVO', 20, yPosition);
+            yPosition += 15;
             
-            doc.setFontSize(12);
-            doc.text(`Costos Fijos Totales: $${costosFijos.reduce((sum, c) => sum + c.monto, 0).toLocaleString()}`, 20, 80);
-            doc.text(`Total de Productos: ${productos.length}`, 20, 90);
+            doc.setFontSize(11);
+            doc.setFont(undefined, 'normal');
             
+            const costosFijosTotales = costosFijos.reduce((sum, c) => sum + c.monto, 0);
+            const totalProductos = productos.length;
             let unidadesTotales = 0;
             let ingresosTotales = 0;
             
@@ -2231,12 +2244,87 @@
                 ingresosTotales = productos.reduce((sum, p) => sum + p.ingresosEquilibrio, 0);
             }
             
-            doc.text(`Unidades Totales para Equilibrio: ${unidadesTotales.toLocaleString()}`, 20, 100);
-            doc.text(`Ingresos Totales en Equilibrio: $${ingresosTotales.toLocaleString()}`, 20, 110);
+            // Métricas clave
+            const margenContribucionTotal = productos.reduce((sum, p) => sum + (p.margenContribucion || 0), 0);
+            const margenSeguridad = ((ingresosTotales - costosFijosTotales) / ingresosTotales) * 100;
+            const apalancamientoOperativo = margenContribucionTotal / (margenContribucionTotal - costosFijosTotales);
             
-            // Tabla de productos
+            const resumenData = [
+                ['Métrica', 'Valor', 'Interpretación'],
+                ['Costos Fijos Totales', `$${costosFijosTotales.toLocaleString()}`, 'Gastos operativos mensuales'],
+                ['Total de Productos', totalProductos.toString(), 'Líneas de producto/servicio'],
+                ['Unidades para Equilibrio', unidadesTotales.toLocaleString(), 'Volumen total necesario'],
+                ['Ingresos de Equilibrio', `$${ingresosTotales.toLocaleString()}`, 'Ventas mínimas requeridas'],
+                ['Margen de Seguridad', `${Math.max(0, margenSeguridad).toFixed(1)}%`, 'Tolerancia a caídas en ventas'],
+                ['Apalancamiento Operativo', `${apalancamientoOperativo.toFixed(1)}x`, 'Sensibilidad de utilidades']
+            ];
+            
+            doc.autoTable({
+                startY: yPosition,
+                head: [resumenData[0]],
+                body: resumenData.slice(1),
+                theme: 'grid',
+                headStyles: { 
+                    fillColor: [37, 99, 235],
+                    textColor: 255,
+                    fontStyle: 'bold'
+                },
+                styles: {
+                    fontSize: 10,
+                    cellPadding: 3
+                },
+                columnStyles: {
+                    0: { cellWidth: 60 },
+                    1: { cellWidth: 40 },
+                    2: { cellWidth: 80 }
+                }
+            });
+            
+            yPosition = doc.lastAutoTable.finalY + 15;
+            
+            // Interpretación del Análisis
             doc.setFontSize(16);
-            doc.text('Puntos de Equilibrio por Producto', 20, 130);
+            doc.setFont(undefined, 'bold');
+            doc.text('INTERPRETACIÓN DEL ANÁLISIS', 20, yPosition);
+            yPosition += 10;
+            
+            doc.setFontSize(11);
+            doc.setFont(undefined, 'normal');
+            
+            // Análisis de Rentabilidad
+            const analisisRentabilidad = generarAnalisisRentabilidad(ingresosTotales, costosFijosTotales, margenSeguridad, apalancamientoOperativo);
+            doc.text('ANÁLISIS DE RENTABILIDAD:', 20, yPosition);
+            yPosition += 7;
+            
+            const rentabilidadLines = doc.splitTextToSize(analisisRentabilidad, pageWidth - 40);
+            doc.text(rentabilidadLines, 20, yPosition);
+            yPosition += (rentabilidadLines.length * 7) + 10;
+            
+            // Verificar si necesitamos nueva página
+            if (yPosition > 250) {
+                doc.addPage();
+                yPosition = 30;
+            }
+            
+            // Recomendaciones Estratégicas
+            doc.setFontSize(14);
+            doc.setFont(undefined, 'bold');
+            doc.text('RECOMENDACIONES ESTRATÉGICAS', 20, yPosition);
+            yPosition += 10;
+            
+            doc.setFontSize(11);
+            doc.setFont(undefined, 'normal');
+            
+            const recomendaciones = generarRecomendaciones(margenSeguridad, apalancamientoOperativo, costosFijosTotales, ingresosTotales);
+            const recLines = doc.splitTextToSize(recomendaciones, pageWidth - 40);
+            doc.text(recLines, 20, yPosition);
+            yPosition += (recLines.length * 7) + 15;
+            
+            // Tabla de Productos Detallada
+            doc.setFontSize(16);
+            doc.setFont(undefined, 'bold');
+            doc.text('ANÁLISIS POR PRODUCTO', 20, yPosition);
+            yPosition += 10;
             
             const tableData = productos.map(p => [
                 p.nombre,
@@ -2248,15 +2336,220 @@
             ]);
             
             doc.autoTable({
-                startY: 140,
-                head: [['Producto', 'Costos Fijos', 'Precio', 'Margen', 'Unidades', 'Ingresos']],
+                startY: yPosition,
+                head: [['Producto', 'Costos Fijos', 'Precio', 'Margen Unit.', 'Unidades', 'Ingresos']],
                 body: tableData,
                 theme: 'grid',
-                headStyles: { fillColor: [37, 99, 235] }
+                headStyles: { 
+                    fillColor: [37, 99, 235],
+                    textColor: 255,
+                    fontStyle: 'bold'
+                },
+                styles: {
+                    fontSize: 9,
+                    cellPadding: 2
+                },
+                columnStyles: {
+                    0: { cellWidth: 40 },
+                    1: { cellWidth: 25 },
+                    2: { cellWidth: 25 },
+                    3: { cellWidth: 25 },
+                    4: { cellWidth: 25 },
+                    5: { cellWidth: 30 }
+                }
             });
             
+            yPosition = doc.lastAutoTable.finalY + 15;
+            
+            // Análisis de Sensibilidad
+            if (yPosition > 200) {
+                doc.addPage();
+                yPosition = 30;
+            }
+            
+            doc.setFontSize(16);
+            doc.setFont(undefined, 'bold');
+            doc.text('ANÁLISIS DE SENSIBILIDAD', 20, yPosition);
+            yPosition += 10;
+            
+            doc.setFontSize(11);
+            doc.setFont(undefined, 'normal');
+            
+            const analisisSensibilidad = generarAnalisisSensibilidad(productos, costosFijosTotales);
+            const sensibilidadLines = doc.splitTextToSize(analisisSensibilidad, pageWidth - 40);
+            doc.text(sensibilidadLines, 20, yPosition);
+            yPosition += (sensibilidadLines.length * 7) + 15;
+            
+            // Plan de Acción
+            doc.setFontSize(14);
+            doc.setFont(undefined, 'bold');
+            doc.text('PLAN DE ACCIÓN RECOMENDADO', 20, yPosition);
+            yPosition += 10;
+            
+            doc.setFontSize(11);
+            doc.setFont(undefined, 'normal');
+            
+            const planAccion = generarPlanAccion(margenSeguridad, unidadesTotales, ingresosTotales);
+            const planLines = doc.splitTextToSize(planAccion, pageWidth - 40);
+            doc.text(planLines, 20, yPosition);
+            
+            // Footer
+            const totalPages = doc.internal.getNumberOfPages();
+            for (let i = 1; i <= totalPages; i++) {
+                doc.setPage(i);
+                doc.setFontSize(8);
+                doc.setTextColor(128);
+                doc.text(
+                    `Página ${i} de ${totalPages} - ProfitMaster Análisis Financiero - Confidencial`,
+                    pageWidth / 2,
+                    doc.internal.pageSize.getHeight() - 10,
+                    { align: 'center' }
+                );
+            }
+            
             // Guardar PDF
-            doc.save('reporte-punto-equilibrio.pdf');
+            doc.save(`Analisis_Punto_Equilibrio_${new Date().toISOString().split('T')[0]}.pdf`);
+        }
+        
+        function generarAnalisisRentabilidad(ingresosEquilibrio, costosFijos, margenSeguridad, apalancamiento) {
+            let analisis = "";
+            
+            // Análisis del punto de equilibrio
+            analisis += `El punto de equilibrio se alcanza con ingresos de $${ingresosEquilibrio.toLocaleString()}, lo que significa que la empresa necesita generar esta cantidad mensual para cubrir todos sus costos fijos de $${costosFijos.toLocaleString()}. `;
+            
+            // Análisis del margen de seguridad
+            if (margenSeguridad > 30) {
+                analisis += `El margen de seguridad del ${margenSeguridad.toFixed(1)}% es EXCELENTE, indicando una posición financiera sólida con alta tolerancia a fluctuaciones en ventas. `;
+            } else if (margenSeguridad > 15) {
+                analisis += `El margen de seguridad del ${margenSeguridad.toFixed(1)}% es ADECUADO, proporcionando un colchón moderado contra caídas en ventas. `;
+            } else if (margenSeguridad > 5) {
+                analisis += `El margen de seguridad del ${margenSeguridad.toFixed(1)}% es BAJO, sugiriendo vulnerabilidad a disminuciones en las ventas. `;
+            } else {
+                analisis += `El margen de seguridad del ${margenSeguridad.toFixed(1)}% es CRÍTICO, indicando alto riesgo operativo. `;
+            }
+            
+            // Análisis del apalancamiento operativo
+            if (apalancamiento > 3) {
+                analisis += `El apalancamiento operativo de ${apalancamiento.toFixed(1)}x es ALTO, lo que significa que pequeños incrementos en ventas generarán grandes aumentos en utilidades, pero también mayor riesgo en caídas. `;
+            } else if (apalancamiento > 1.5) {
+                analisis += `El apalancamiento operativo de ${apalancamiento.toFixed(1)}x es MODERADO, balanceando potencial de crecimiento con riesgo controlado. `;
+            } else {
+                analisis += `El apalancamiento operativo de ${apalancamiento.toFixed(1)}x es BAJO, indicando estabilidad pero menor potencial de crecimiento por incrementos en ventas. `;
+            }
+            
+            // Análisis de la estructura de costos
+            const proporcionCostosFijos = (costosFijos / ingresosEquilibrio) * 100;
+            if (proporcionCostosFijos > 60) {
+                analisis += `La estructura de costos es RÍGIDA (${proporcionCostosFijos.toFixed(1)}% costos fijos), requiriendo alto volumen de ventas para ser rentable. `;
+            } else if (proporcionCostosFijos > 40) {
+                analisis += `La estructura de costos es BALANCEADA (${proporcionCostosFijos.toFixed(1)}% costos fijos), permitiendo flexibilidad operativa. `;
+            } else {
+                analisis += `La estructura de costos es FLEXIBLE (${proporcionCostosFijos.toFixed(1)}% costos fijos), favoreciendo la adaptación a cambios en el mercado. `;
+            }
+            
+            return analisis;
+        }
+        
+        function generarRecomendaciones(margenSeguridad, apalancamiento, costosFijos, ingresosEquilibrio) {
+            let recomendaciones = "";
+            const recomendacionesList = [];
+            
+            // Recomendaciones basadas en margen de seguridad
+            if (margenSeguridad < 10) {
+                recomendacionesList.push("• PRIORITARIO: Implementar estrategias para aumentar el margen de seguridad mediante reducción de costos fijos o aumento de precios");
+                recomendacionesList.push("• Desarrollar plan de contingencia para periodos de baja demanda");
+            } else if (margenSeguridad < 20) {
+                recomendacionesList.push("• Diversificar fuentes de ingresos para fortalecer la posición financiera");
+                recomendacionesList.push("• Optimizar estructura de costos para mejorar flexibilidad operativa");
+            } else {
+                recomendacionesList.push("• Mantener estrategias actuales que han demostrado efectividad");
+                recomendacionesList.push("• Considerar inversiones estratégicas para crecimiento controlado");
+            }
+            
+            // Recomendaciones basadas en apalancamiento
+            if (apalancamiento > 2.5) {
+                recomendacionesList.push("• Enfoque en crecimiento de ventas para maximizar utilidades");
+                recomendacionesList.push("• Monitorear estrechamente el mercado por alta sensibilidad a fluctuaciones");
+            }
+            
+            // Recomendaciones basadas en relación costos/ingresos
+            const relacionCostosIngresos = costosFijos / ingresosEquilibrio;
+            if (relacionCostosIngresos > 0.6) {
+                recomendacionesList.push("• Revisar estructura de costos fijos para mejorar eficiencia");
+                recomendacionesList.push("• Considerar outsourcing de funciones no core para convertir costos fijos en variables");
+            }
+            
+            // Recomendaciones generales
+            recomendacionesList.push("• Revisar trimestralmente el punto de equilibrio ante cambios en costos o precios");
+            recomendacionesList.push("• Establecer sistema de alertas tempranas para desviaciones significativas");
+            recomendacionesList.push("• Capacitar equipo comercial en el valor del margen de contribución por producto");
+            
+            recomendaciones = recomendacionesList.join('\n');
+            return recomendaciones;
+        }
+        
+        function generarAnalisisSensibilidad(productos, costosFijosTotales) {
+            let analisis = "El análisis de sensibilidad revela cómo cambios en precios y costos afectan la rentabilidad:\n\n";
+            
+            // Calcular sensibilidad promedio
+            let sensibilidadPrecio = 0;
+            let sensibilidadCosto = 0;
+            
+            productos.forEach(producto => {
+                const sensibilidadPrecioProd = (producto.unidadesEquilibrio / producto.precio) * 100;
+                const sensibilidadCostoProd = (producto.unidadesEquilibrio / producto.margenUnitario) * 100;
+                sensibilidadPrecio += sensibilidadPrecioProd;
+                sensibilidadCosto += sensibilidadCostoProd;
+            });
+            
+            sensibilidadPrecio /= productos.length;
+            sensibilidadCosto /= productos.length;
+            
+            analisis += `• Sensibilidad a precios: Un cambio del 1% en precios afecta el punto de equilibrio en aproximadamente ${sensibilidadPrecio.toFixed(1)}%\n`;
+            analisis += `• Sensibilidad a costos variables: Un cambio del 1% en costos variables impacta el equilibrio en ${sensibilidadCosto.toFixed(1)}%\n`;
+            analisis += `• Producto más sensible: ${productos.reduce((prev, current) => 
+                (prev.margenUnitario/prev.precio) < (current.margenUnitario/current.precio) ? prev : current
+            ).nombre}\n`;
+            analisis += `• Producto menos sensible: ${productos.reduce((prev, current) => 
+                (prev.margenUnitario/prev.precio) > (current.margenUnitario/current.precio) ? prev : current
+            ).nombre}\n\n`;
+            
+            analisis += "RECOMENDACIONES DE SENSIBILIDAD:\n";
+            analisis += "• Enfocar esfuerzos de control en productos de alta sensibilidad\n";
+            analisis += "• Establecer márgenes de seguridad para variables críticas\n";
+            analisis += "• Desarrollar estrategias de precios diferenciadas por sensibilidad";
+            
+            return analisis;
+        }
+        
+        function generarPlanAccion(margenSeguridad, unidadesTotales, ingresosTotales) {
+            let plan = "PLAN DE ACCIÓN INMEDIATO (PRÓXIMOS 30 DÍAS):\n\n";
+            
+            if (margenSeguridad < 15) {
+                plan += "1. REVISIÓN DE COSTOS FIJOS (Urgente)\n";
+                plan += "   • Identificar al menos 3 partidas reducibles\n";
+                plan += "   • Negociar con proveedores servicios recurrentes\n";
+                plan += "   • Fecha límite: 15 días\n\n";
+            }
+            
+            plan += "2. OPTIMIZACIÓN DE PRECIOS\n";
+            plan += "   • Análisis competitivo de precios por producto\n";
+            plan += "   • Revisión de elasticidad precio-demanda\n";
+            plan += "   • Fecha límite: 20 días\n\n";
+            
+            plan += "3. PLAN COMERCIAL\n";
+            plan += "   • Establecer meta mínima: " + Math.ceil(unidadesTotales * 1.1) + " unidades/mes\n";
+            plan += "   • Desarrollar incentivos por margen de contribución\n";
+            plan += "   • Fecha límite: 25 días\n\n";
+            
+            plan += "4. MONITOREO Y CONTROL\n";
+            plan += "   • Implementar dashboard de métricas clave\n";
+            plan += "   • Reuniones semanales de seguimiento\n";
+            plan += "   • Sistema de alertas tempranas\n\n";
+            
+            plan += "OBJETIVO A 90 DÍAS: Alcanzar margen de seguridad del " + Math.max(20, margenSeguridad + 5).toFixed(0) + "%";
+            
+            return plan;
         }
         
         function exportarAExcel() {
