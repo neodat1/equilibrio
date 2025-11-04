@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ProfitMaster - Análisis de Punto de Equilibrio</title>
+    <title>Neodat - Análisis de Equilibrio</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.25/jspdf.plugin.autotable.min.js"></script>
@@ -714,9 +714,9 @@
                     <!-- Reemplaza "tu-logo.png" con la ruta a tu imagen de logo -->
                     <img src="tu-logo.png" alt="Logo de la Empresa" onerror="this.style.display='none'; this.parentNode.innerHTML='<i class=\"fas fa-chart-line\"></i>';">
                 </div>
-                <div class="logo-text">ProfitMaster</div>
+                <div class="logo-text">Neodat</div>
             </div>
-            <div class="page-title">Análisis de Punto de Equilibrio</div>
+            <div class="page-title">Análisis de Equilibrio</div>
         </div>
         
         <!-- Main Content -->
@@ -1307,7 +1307,7 @@
                     </div>
                     
                     <p style="margin-bottom: 20px; color: var(--gray);">
-                        Genere un reporte profesional con todos los datos de su análisis de punto de equilibrio.
+                        Genere un reporte profesional con todos los datos de su Análisis de Equilibrio.
                     </p>
                     
                     <div class="btn-group">
@@ -1420,7 +1420,7 @@
             </div>
             
             <div class="footer">
-                <p>ProfitMaster - Sistema de Análisis Financiero &copy; 2023</p>
+                <p>Neodat &copy; 2025</p>
             </div>
         </div>
     </div>
@@ -1897,7 +1897,7 @@
                     plugins: {
                         title: {
                             display: true,
-                            text: 'Análisis de Punto de Equilibrio',
+                            text: 'Análisis de Equilibrio',
                             font: {
                                 size: 16,
                                 weight: 'bold'
@@ -2218,7 +2218,7 @@
             // Título principal
             doc.setFontSize(20);
             doc.setFont(undefined, 'bold');
-            doc.text('ANÁLISIS DE PUNTO DE EQUILIBRIO', pageWidth / 2, yPosition, { align: 'center' });
+            doc.text('Análisis de Equilibrio', pageWidth / 2, yPosition, { align: 'center' });
             yPosition += 15;
             
             // Fecha y información de la empresa
@@ -2408,7 +2408,7 @@
                 doc.setFontSize(8);
                 doc.setTextColor(128);
                 doc.text(
-                    `Página ${i} de ${totalPages} - ProfitMaster Análisis Financiero - Confidencial`,
+                    `Página ${i} de ${totalPages} - Neodat Análisis Financiero - Confidencial`,
                     pageWidth / 2,
                     doc.internal.pageSize.getHeight() - 10,
                     { align: 'center' }
